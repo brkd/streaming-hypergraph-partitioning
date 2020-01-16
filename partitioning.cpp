@@ -323,12 +323,12 @@ int Algorithms::calculateCuts()
 	int cuts = 0;
 	for (std::vector<int> edge : this->netToPartition)
 	{
-		int vertexCount = 0;
+		int partCount = 0;
 		for (int i : edge)
 		{
-			vertexCount++;
+			partCount++;
 		}		
-		cuts += (vertexCount * (vertexCount - 1)) / 2;
+		cuts += partCount - 1;
 	}
 
 	return cuts;
@@ -392,6 +392,7 @@ int Algorithms::n2pIndex(int vertex, int* sizeArray, int* indexArray, bool* mark
 			}
 		}
 	}
+
 	return maxIndex;
 }
 
