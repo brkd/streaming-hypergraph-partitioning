@@ -5,69 +5,101 @@
 #include <stdlib.h>
 #include <cmath>
 
+
+/*
+int readBinaryGraph(FILE* bp, etype **pxadj, vtype **padj,
+                    ewtype **pewghts, vwtype **pvwghts,
+                    vtype* pnov) {
+
+  fread(pnov, sizeof(vtype), 1, bp);
+
+  (*pxadj) = (etype*)malloc(sizeof(etype) * (*pnov + 1));
+  fread(*pxadj, sizeof(etype), (size_t)(*pnov + 1), bp);
+
+  (*padj) = (vtype*)malloc(sizeof(vtype) * (*pxadj)[*pnov]);
+  fread(*padj, sizeof(vtype), (size_t)(*pxadj)[*pnov], bp);
+
+  (*pewghts) = (ewtype*)malloc(sizeof(ewtype) * (*pxadj)[*pnov]);
+  fread(*pewghts, sizeof(ewtype), (size_t)(*pxadj)[*pnov], bp);
+
+  (*pvwghts) = (vwtype*)malloc(sizeof(vwtype) * (*pnov));
+  fread(*pvwghts, sizeof(vwtype), *pnov, bp);
+
+  return 1;
+}
+
+int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
+                     ewtype *ewghts, vwtype *vwghts,
+                     vtype nov) {
+
+  fwrite(&nov, sizeof(vtype), (size_t)1, bp);
+  fwrite(xadj, sizeof(etype), (size_t)(nov + 1), bp);
+  fwrite(adj, sizeof(vtype), (size_t)(xadj[nov]), bp);
+  fwrite(ewghts, sizeof(ewtype), (size_t)(xadj[nov]), bp);
+  fwrite(vwghts, sizeof(vwtype), (size_t)(nov), bp);
+
+  return 1;
+}
+
+  sprintf(bfile, "%s_bin/%s.bin", currFolder, gfile + dirindex + 1);
+  printf("Binary file name: %s\n", bfile);
+  bp = fopen(bfile, "rb");
+  if (bp != NULL) { // read from binary 
+
+*/
+
+
+
 //Public methods
-Algorithms::Algorithms(std::string fileName, int partitionCount)
-{
-	//Read matrix
-	std::ifstream fin(fileName);
-	while(fin.peek() == '%') fin.ignore(2048, '\n');
-	fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
-	std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
+Algorithms::Algorithms(std::string fileName) {
+  //Read matrix
+  std::ifstream fin(fileName);
+  while(fin.peek() == '%') fin.ignore(2048, '\n');
+  fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
+  std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
 
-	//Init variables
-	this->partitionCount = partitionCount;
-	this->capacityConstraint = this->vertexCount / this->partitionCount;
-	int capacity = this->vertexCount / this->partitionCount;
-
-	//Generate random read order
-	for (int i = 0; i < this->vertexCount; i++)
+  //Init partition matrix
+  this->partitions = new int*[this->partitionCount];
+  for (int i = 0; i < this->partitionCount; i++)
+    {
+      this->partitions[i] = new int[capacity];
+    }
+  
+  //Init partitionToNet structure
+  for (int i = 0; i < this->edgeCount; i++)
+    {
+      std::vector<int> partition;
+      this->partitionToNet.push_back(partition);
+    }
+  
+  //Init netToPartition structure
+  for (int i = 0; i < this->edgeCount; i++)
+    {
+      std::vector<int> edge;
+      this->netToPartition.push_back(edge);
+    }
+  std::cout << "Initialization: DONE!" << std::endl;
+  
+  //Init sparse matrix representation
+  this->sparseMatrix = new int[this->nonzeroCount + 1];
+  this->sparseMatrixIndex = new int[this->vertexCount + 1];
+  sparseMatrix[0] = 0;
+  int vIndex = 0, row, col, currentColumn = -1;
+  double value;	
+  for(int i = 0; i < this->nonzeroCount; i++)
+    {
+      fin >> row >> col >> value;
+      this->sparseMatrix[i] = row;
+      if (col != currentColumn)
 	{
-		this->readOrder.push_back(i);
+	  this->sparseMatrixIndex[vIndex] = col;
+	  currentColumn = col;
+	  vIndex++;
 	}
-	std::random_shuffle(this->readOrder.begin(), this->readOrder.end());
-
-	//Init partition matrix
-	this->partitions = new int*[this->partitionCount];
-	for (int i = 0; i < this->partitionCount; i++)
-	{
-		this->partitions[i] = new int[capacity];
-	}
-
-	//Init partitionToNet structure
-	for (int i = 0; i < this->edgeCount; i++)
-	{
-		std::vector<int> partition;
-		this->partitionToNet.push_back(partition);
-	}
-
-	//Init netToPartition structure
-	for (int i = 0; i < this->edgeCount; i++)
-	{
-		std::vector<int> edge;
-		this->netToPartition.push_back(edge);
-	}
-	std::cout << "Initialization: DONE!" << std::endl;
-
-	//Init sparse matrix representation
-	this->sparseMatrix = new int[this->nonzeroCount + 1];
-	this->sparseMatrixIndex = new int[this->vertexCount + 1];
-	sparseMatrix[0] = 0;
-	int vIndex = 0, row, col, currentColumn = -1;
-	double value;	
-	for(int i = 0; i < this->nonzeroCount; i++)
-	{
-		fin >> row >> col >> value;
-		this->sparseMatrix[i] = row;
-		if (col != currentColumn)
-		{
-			this->sparseMatrixIndex[vIndex] = col;
-			currentColumn = col;
-			vIndex++;
-		}
-	}
-	this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
-	this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
-	std::cout << "Matrix integration: DONE!" << std::endl;	
+    }
+  this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
+  this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
+  std::cout << "Matrix integration: DONE!" << std::endl;	
 }
 
 Algorithms::Algorithms(std::string fileName, int partitionCount, int byteSize, int hashCount)
@@ -179,40 +211,52 @@ void Algorithms::LDGp2n()
 	delete[] sizeArray;
 }
 
-void Algorithms::LDGn2p()
-{
-	int* sizeArray = new int[this->partitionCount];
-	int* indexArray = new int[this->partitionCount];
-	bool* markerArray = new bool[this->partitionCount];
-	for (int i = 0; i < this->partitionCount; i++)
-	{
-		sizeArray[i] = 0;
-		indexArray[i] = -1;
-		markerArray[i] = false;
-	}	
-	std::vector<int> encounterArray;
-	
-	for (int i : this->readOrder)
-	{
-		int maxIndex = this->n2pIndex(i, sizeArray, indexArray, markerArray, encounterArray);
-		partitions[maxIndex][sizeArray[maxIndex]] = i;
-		sizeArray[maxIndex] += 1;
-		for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-		{
-			int edge = this->sparseMatrix[k];
-			if (std::find(netToPartition[edge].begin(), netToPartition[edge].end(), maxIndex) == netToPartition[edge].end())
-			{
-				netToPartition[edge].push_back(maxIndex);
-			}			
-		}
-		for (int i = 0; i < this->partitionCount; i++)
-		{
-			indexArray[i] = -1;
-			markerArray[i] = false;
-		}
-	}
-	
-	delete[] sizeArray;
+
+void Algorithms::partition(int algorithm, int partitionCount, double imbal) {
+  //Generate random read order
+  for (int i = 0; i < this->vertexCount; i++) {
+    this->readOrder.push_back(i);
+  }
+  std::random_shuffle(this->readOrder.begin(), this->readOrder.end());
+  
+  if(algorithm == 1) {
+    LDGn2P();
+  } else if(algorithm == 2) {
+  } //...
+
+  //compute cut and report
+  
+}
+
+void Algorithms::LDGn2p() {
+  int* sizeArray = new int[this->partitionCount];
+  int* indexArray = new int[this->partitionCount];
+  bool* markerArray = new bool[this->partitionCount];
+  for (int i = 0; i < this->partitionCount; i++) {
+    sizeArray[i] = 0;
+    indexArray[i] = -1;
+    markerArray[i] = false;
+  }	
+  std::vector<int> encounterArray;
+  
+  for (int i : this->readOrder) {
+    int maxIndex = this->n2pIndex(i, sizeArray, indexArray, markerArray, encounterArray);
+    //partitions[maxIndex][sizeArray[maxIndex]] = i;
+    sizeArray[maxIndex] += 1;
+    for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++) {
+      int edge = this->sparseMatrix[k];
+      if (std::find(netToPartition[edge].begin(), netToPartition[edge].end(), maxIndex) == netToPartition[edge].end()) {
+	netToPartition[edge].push_back(maxIndex);
+      }			
+    }
+ 
+    for (int i = 0; i < this->partitionCount; i++) {
+      indexArray[i] = -1;
+      markerArray[i] = false;
+    }
+  }
+  
+  delete[] sizeArray;
 }
 
 void Algorithms::LDGBF()

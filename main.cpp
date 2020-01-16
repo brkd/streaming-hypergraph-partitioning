@@ -1,73 +1,60 @@
 #include "partitioning.cpp"
 #include <chrono>
 
-int main()
-{
-	std::ofstream output;
-	output.open("output.txt", std::ios_base::app);
-	while (true)
-	{
-		std::string fileName;
-		int partitionCount, randomizationCount;
-		int state;
-		std::cout << "[1]: N2P - [2]: P2N - [3]: BF - Other: Exit" << std::endl;
-		std::cout << "Choice: "; std::cin >> state;
-		if (state != 1 && state != 2 && state != 3)
-		{
-			break;
-		}
-		std::cout << "Enter partition count: "; std::cin >> partitionCount;
-		std::cout << "Enter matrix name: "; std::cin >> fileName;
-		std::cout << "Enter randomization count: "; std::cin >> randomizationCount;
-		switch (state)
-		{			
-			case 1:
-			{
-				for (size_t i = 0; i < randomizationCount; i++)
-				{
-					Algorithms n2pPartitioner(fileName, partitionCount);
-					auto start = std::chrono::high_resolution_clock::now();
-					n2pPartitioner.LDGn2p();
-					auto end = std::chrono::high_resolution_clock::now();
-					output << "N2P with " << fileName << ", " << partitionCount << ": " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
-					int cuts = n2pPartitioner.calculateCuts();
-					output << "Cuts with N2P:" << cuts << std::endl;
-					output << std::endl;
-				}
-				break;
-			}				
-			case 2:
-			{
-				for (size_t i = 0; i < randomizationCount; i++)
-				{
-					Algorithms p2nPartitioner(fileName, partitionCount);
-					auto start = std::chrono::high_resolution_clock::now();
-					p2nPartitioner.LDGp2n();
-					auto end = std::chrono::high_resolution_clock::now();
-					output << "P2N with " << fileName << ", " << partitionCount << ": " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;					
-					output << std::endl;
-				}
-				break;
-			}
-			case 3:
-			{
-				int byteSize, hashCount;
-				std::cout << "Enter BF size in bytes: "; std::cin >> byteSize;
-				std::cout << "Enter hash function count for BF: "; std::cin >> hashCount;
-				Algorithms bfPartitioner(fileName, partitionCount, byteSize, hashCount);
-				auto start = std::chrono::high_resolution_clock::now();
-				bfPartitioner.LDGBF();
-				auto end = std::chrono::high_resolution_clock::now();
-				output << "Regular BF with " << fileName << ", " << partitionCount << ": " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
-				output << std::endl;
-				break;
-			}
-			
-			default:
-				break;				
-		}
-	}
-	output.close();
+int main(int argc, char** argv) {
+  std::string fileName;
+  int partitionCount, randomizationCount;
+  int state = atoi(argv[1]);
+  if (state != 1 && state != 2 && state != 3) {
+    std::cout << "wrong algorithm" << endl;
+    exit(1);
+  }
+  partitionCount = atoi(argv[2]);
 
-	return 0;	
+  double imbal = atof(argv[3]);  
+  fileName = argv[4];		
+  randomizationCount = atoi(argv[5]);
+
+  int byteSize;
+  int hashCount;
+  if(state == 3) { 
+    if(argc > 7) {
+      byteSize = atoi(argv[6]);
+      hashCount = atoi(argv[7]);
+    } else {
+      std::cout << "Missing info for BF " << std::endl;
+    }
+  }
+
+  if(state == 1) {
+      Algorithms n2pPartitioner(fileName);
+      for (size_t i = 0; i < randomizationCount; i++) {
+	auto start = std::chrono::high_resolution_clock::now();
+	n2pPartitioner.LDGn2p(partitionCount, imbal);
+	auto end = std::chrono::high_resolution_clock::now();
+	std::cout << "N2P with " << fileName << ", " << partitionCount << ": " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+	int cuts = n2pPartitioner.calculateCuts();
+	std::cout << "Cuts with N2P:" << cuts << std::endl;
+	std::cout << std::endl;
+      }
+  } else if(state == 2) {
+    Algorithms p2nPartitioner(fileName);
+    for (size_t i = 0; i < randomizationCount; i++) {
+      auto start = std::chrono::high_resolution_clock::now();
+      p2nPartitioner.LDGp2n(partitionCount, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "P2N with " << fileName << ", " << partitionCount << ": " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;					
+      std::cout << std::endl;
+    }
+  } else if(state == 3) {
+    for (size_t i = 0; i < randomizationCount; i++) {
+      Algorithms bfPartitioner(fileName, byteSize, hashCount);
+      auto start = std::chrono::high_resolution_clock::now();
+      bfPartitioner.LDGBF(partitionCount, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Regular BF with " << fileName << ", " << partitionCount << ": " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      std::cout << std::endl;
+    }
+  }
+  return 0;	
 }

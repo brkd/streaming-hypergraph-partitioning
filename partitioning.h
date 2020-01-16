@@ -2,8 +2,11 @@
 #define _PARTITIONING_H
 
 #include "bloomclass.h"
-#include<vector>
+#include <vector>
 #include <string>
+
+#define MAXPARTNO 4096
+#define MAXIMBAL 1.20
 
 class Algorithms
 {
@@ -11,9 +14,18 @@ private:
 	//Attributes
 	int* sparseMatrix;
 	int* sparseMatrixIndex;
+
 	int** partitions;
+	//int* partVector; //pv[i] -> where i resides
+
 	std::vector<std::vector<int>> partitionToNet;
+
 	std::vector<std::vector<int>> netToPartition;
+	//int* netpointers;  - size: (net + 1) 
+	//int* netparts; - size: pins - (netparts[netpointers[i]] to netparts[netpointers[i+1]-1 is allocated for the parts of net i. 
+	//               - this array is initially assigned to -1 (net
+	//int netcon; - size: net (initially 0) 
+
 	std::vector<int> readOrder;
 	Bloom<int, int>* bloomFilter;
 
@@ -41,8 +53,4 @@ public:
 	void LDGMultiBF();
 	int calculateCuts();
 };
-
-
-
-
 #endif
