@@ -12,7 +12,7 @@ private:
 	int* sparseMatrix;
 	int* sparseMatrixIndex;
 	int** partitions;
-	int** partitionToNet;
+	std::vector<std::vector<int>> partitionToNet;
 	std::vector<std::vector<int>> netToPartition;
 	std::vector<int> readOrder;
 	Bloom<int, int>* bloomFilter;
@@ -25,7 +25,7 @@ private:
 	 
 	//Methods
 	int p2nConnectivity(int, int);
-	int n2pIndex(int, int*);
+	int n2pIndex(int, int*, int*, bool*, std::vector<int>);
 	int BFConnectivity(int, int);
 public:
 	//Constructors
