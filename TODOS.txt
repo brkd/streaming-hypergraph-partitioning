@@ -1,0 +1,5 @@
+1) Data structure change
+2) Change functions according to new data structure
+3) Algorithm class will be renamed as partitioner class
+4) Algortihm decision will move to Algorithms(Partitioner) class
+4) Binary read-write
