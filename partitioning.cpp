@@ -59,11 +59,7 @@ Algorithms::Algorithms(std::string fileName) {
   std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
 
   //Init partition matrix
-  this->partitions = new int*[this->partitionCount];
-  for (int i = 0; i < this->partitionCount; i++)
-    {
-      this->partitions[i] = new int[capacity];
-    }
+  this->partVector = new int[this->vertexCount];  
   
   //Init partitionToNet structure
   for (int i = 0; i < this->edgeCount; i++)

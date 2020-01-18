@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
 
   int byteSize;
   int hashCount;
-  if(state == 3) { 
+  if(algorithm == 3) { 
     if(argc > 7) {
       byteSize = atoi(argv[6]);
       hashCount = atoi(argv[7]);
