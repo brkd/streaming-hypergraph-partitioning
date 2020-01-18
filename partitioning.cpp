@@ -48,33 +48,17 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 
 */
 
-
-
 //Public methods
 Algorithms::Algorithms(std::string fileName) {
   //Read matrix
   std::ifstream fin(fileName);
   while(fin.peek() == '%') fin.ignore(2048, '\n');
   fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
-  std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
+  std::cout << "Row count: " << this->edgeCount << " Column count: " << this->vertexCount << " Non-zero count: " << this->nonzeroCount << std::endl;
 
   //Init partition matrix
   this->partVector = new int[this->vertexCount];  
-  
-  //Init partitionToNet structure
-  for (int i = 0; i < this->edgeCount; i++)
-    {
-      std::vector<int> partition;
-      this->partitionToNet.push_back(partition);
-    }
-  
-  //Init netToPartition structure
-  for (int i = 0; i < this->edgeCount; i++)
-    {
-      std::vector<int> edge;
-      this->netToPartition.push_back(edge);
-    }
-  std::cout << "Initialization: DONE!" << std::endl;
+  this->bloomFilter = nullptr;
   
   //Init sparse matrix representation
   this->sparseMatrix = new int[this->nonzeroCount + 1];
@@ -83,22 +67,22 @@ Algorithms::Algorithms(std::string fileName) {
   int vIndex = 0, row, col, currentColumn = -1;
   double value;	
   for(int i = 0; i < this->nonzeroCount; i++)
-    {
+  {
       fin >> row >> col >> value;
       this->sparseMatrix[i] = row;
       if (col != currentColumn)
-	{
-	  this->sparseMatrixIndex[vIndex] = col;
-	  currentColumn = col;
-	  vIndex++;
-	}
-    }
+    	{
+    	  this->sparseMatrixIndex[vIndex] = col;
+    	  currentColumn = col;
+    	  vIndex++;
+    	}
+  }
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
   std::cout << "Matrix integration: DONE!" << std::endl;	
 }
 
-Algorithms::Algorithms(std::string fileName, int partitionCount, int byteSize, int hashCount)
+Algorithms::Algorithms(std::string fileName, int byteSize, int hashCount)
 {
 	//Read matrix
 	std::ifstream fin(fileName);
@@ -106,28 +90,11 @@ Algorithms::Algorithms(std::string fileName, int partitionCount, int byteSize, i
 	fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
 	std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
 
-	//Init variables
-	this->partitionCount = partitionCount;
-	this->capacityConstraint = this->vertexCount / this->partitionCount;
-	int capacity = this->vertexCount / this->partitionCount;
-
-	//Generate random read order
-	for (int i = 0; i < this->vertexCount; i++)
-	{
-		this->readOrder.push_back(i);
-	}
-	std::random_shuffle(this->readOrder.begin(), this->readOrder.end());
-
-	//Init partition matrix
-	this->partitions = new int*[this->partitionCount];
-	for (int i = 0; i < this->partitionCount; i++)
-	{
-		this->partitions[i] = new int[capacity];
-	}
+  //Init partition matrix
+  this->partVector = new int[this->vertexCount];
 
 	//Init bloom filter
 	this->bloomFilter = new Bloom<int, int>(byteSize, hashCount);
-	std::cout << "Initialization: DONE!" << std::endl;
 
 	//Init sparse matrix representation
 	this->sparseMatrix = new int[this->nonzeroCount + 1];
@@ -151,36 +118,62 @@ Algorithms::Algorithms(std::string fileName, int partitionCount, int byteSize, i
 	std::cout << "Matrix integration: DONE!" << std::endl;
 }
 
-
-
 Algorithms::~Algorithms()
 {
-	for (int i = 0; i < this->partitionCount; i++)
-	{
-		delete[] this->partitions[i];
-	}
-	delete[] this->partitions;
-
+  delete[] this->partVec;
 	delete[] this->sparseMatrix;
 	delete[] this->sparseMatrixIndex;
+ 
+  if(this->bloomFilter)
+    delete this->bloomFilter;
 }
 
-void Algorithms::LDGp2n()
+void Algorithms::partition(int algorithm, int partitionCount, double imbal)
+{ 
+  //Partition
+  if(algorithm == 1)
+  {
+    LDGp2n(partitionCount, imbal);
+  }
+  else if(algorithm == 2)
+  {
+    LDGn2p();  
+  }
+  else if(algorithm == 3)
+  {
+    LDGBF();
+  }
+
+  //compute cut and report  
+}
+
+void Algorithms::LDGp2n(int partitionCount, double imbal)
 {
 	int* sizeArray = new int[this->partitionCount];
 	for (int i = 0; i < this->partitionCount; i++)
 	{
 		sizeArray[i] = 0;
-	}	
-	
+	}
+ 
+  //Generate random read order
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+  {
+    readOrder.push_back(i);
+  }
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  
+  std::vector<std::vector<int>> partitionToNet(partitionCount);  
+  
+  double capacityConstraint = (imbal*this->vertexCount) / partitionCount;
 	for (int i : this->readOrder)
 	{
 		double maxScore = -1.0;
 		int maxIndex = -1;
-		for (int j = 0; j < this->partitionCount; j++)
+		for (int j = 0; j < partitionCount; j++)
 		{
 			int connectivity = this->p2nConnectivity(j, i);
-			double partToCapacity = sizeArray[j] / this->capacityConstraint;
+			double partOverCapacity = sizeArray[j] / capacityConstraint;
 			double penalty = 1 - partToCapacity;
 			double score = penalty * connectivity;
 			if (score > maxScore)
@@ -196,38 +189,25 @@ void Algorithms::LDGp2n()
 				}
 			}
 		}
-		partitions[maxIndex][sizeArray[maxIndex]] = i;
+		partVec[i] = maxIndex;
 		sizeArray[maxIndex] += 1;
+    int maxIndexSize = partitionToNet[maxIndex].size() - 1
 		for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
 		{
-			this->partitionToNet[maxIndex][this->sparseMatrix[k]] = true;
+      int* p = std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]);
+      if(p == partitionToNet[maxIndex].end())
+        partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
 		}
 	}
 	
 	delete[] sizeArray;
 }
 
-
-void Algorithms::partition(int algorithm, int partitionCount, double imbal) {
-  //Generate random read order
-  for (int i = 0; i < this->vertexCount; i++) {
-    this->readOrder.push_back(i);
-  }
-  std::random_shuffle(this->readOrder.begin(), this->readOrder.end());
-  
-  if(algorithm == 1) {
-    LDGn2P();
-  } else if(algorithm == 2) {
-  } //...
-
-  //compute cut and report
-  
-}
-
 void Algorithms::LDGn2p() {
   int* sizeArray = new int[this->partitionCount];
   int* indexArray = new int[this->partitionCount];
   bool* markerArray = new bool[this->partitionCount];
+  std::vector<std::vector<int>>
   for (int i = 0; i < this->partitionCount; i++) {
     sizeArray[i] = 0;
     indexArray[i] = -1;
@@ -375,14 +355,12 @@ int Algorithms::calculateCuts()
 }
 
 //Private methods
-int Algorithms::p2nConnectivity(int partitionID, int vertex)
+int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet)
 {
 	int connectivityCount = 0;		
 	for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
 	{
-		int edge = this->sparseMatrix[k];
-		if (this->partitionToNet[partitionID][edge])
-			connectivityCount++;
+		connectivityCount += partitionToNet[partitionID].size();
 	}
 
 	return connectivityCount;
