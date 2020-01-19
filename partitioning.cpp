@@ -48,6 +48,9 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 
 */
 
+std::default_random_engine generator;
+std::uniform_int_distribution<int> distribution(0,16);
+
 //Public methods
 Algorithms::Algorithms(std::string fileName) {
   //Read matrix
@@ -90,8 +93,8 @@ Algorithms::Algorithms(std::string fileName, int byteSize, int hashCount)
 	fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
 	std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
 
-  //Init partition matrix
-  this->partVec = new int[this->vertexCount];
+	//Init partition matrix
+	this->partVec = new int[this->vertexCount];
 
 	//Init bloom filter
 	this->bloomFilter = new Bloom<int, int>(byteSize, hashCount);
@@ -121,9 +124,9 @@ Algorithms::Algorithms(std::string fileName, int byteSize, int hashCount)
 Algorithms::~Algorithms()
 {
   delete[] this->partVec;
-	delete[] this->sparseMatrix;
-	delete[] this->sparseMatrixIndex;
- 
+  delete[] this->sparseMatrix;
+  delete[] this->sparseMatrixIndex;
+  
   if(this->bloomFilter)
     delete this->bloomFilter;
 }
@@ -151,10 +154,11 @@ void Algorithms::partition(int algorithm, int partitionCount, double imbal)
 //ALGO 1//
 void Algorithms::LDGp2n(int partitionCount, double imbal)
 {
-  int* sizeArray = new int[this->partitionCount];
-  for (int i = 0; i < this->partitionCount; i++)
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
     {
       sizeArray[i] = 0;
+      std::cout << "SIZE ARRAY[ı]:" << sizeArray[i] << std::endl;
     }
   
   //Generate random read order
@@ -178,10 +182,12 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
       for (int j = 0; j < partitionCount; j++)
 	{
 	  int connectivity = this->p2nConnectivity(j, i, partitionToNet);
+	  //int connectivity = 0;
 	  std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
 	  double partOverCapacity = sizeArray[j] / capacityConstraint;
 	  double penalty = 1 - partOverCapacity;
 	  double score = penalty * connectivity;
+	  std::cout << "sizearray[j]: " << sizeArray[j] << " poc: " << partOverCapacity << " penalty: " << penalty << " score: " << score << std::endl;
 	  if (score > maxScore)
 	    {
 	      maxScore = score;
@@ -199,6 +205,8 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
       int maxIndexSize = partitionToNet[maxIndex].size() - 1;
+
+
       for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
 	{
 	  if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
@@ -206,6 +214,11 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
 	}
     }
   
+  std::cout << "******PART SIZES*******" << std::endl;
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  }
+
   delete sizeArray;
 }
 
@@ -409,17 +422,40 @@ void Algorithms::LDGMultiBF()
 }*/
 
 //Private methods
+ 
 int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet)
 {
-	int connectivityCount = 0;		
-	for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
-	{
-	  if(std::find(partitionToNet[partitionID].begin(), partitionToNet[partitionID].end(), this->sparseMatrix[k] != partitionToNet[partitionID].end()))
-      connectivityCount += 1;
+  int connectivityCount = 0;		
+  for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
+    {
+      if(std::find(partitionToNet[partitionID].begin(), partitionToNet[partitionID].end(), this->sparseMatrix[k]) != partitionToNet[partitionID].end())
+	connectivityCount += 1;
 	}
-
-	return connectivityCount;
+  
+  if(connectivityCount > 3)
+    std::cout << "cc: " << connectivityCount << std::endl;
+  return connectivityCount;
 }
+ 
+
+  ///Manual connectivity
+  /*
+ int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet){
+   
+   int connectivityCount = 1;
+     
+   for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++){//For all edges vertex connected
+
+       int net = this->sparseMatrix[k];
+       int vec_size = partitionToNet[partitionID].size();
+       for(int n = 0; n < vec_size; n++){ //Check if partition have that net
+	 if(partitionToNet[partitionID][n] == net)
+	   connectivityCount++;
+       }
+     }
+   return connectivityCount;
+ }
+  */
 
 int Algorithms::n2pIndex(int vertex, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition)
 {
