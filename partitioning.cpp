@@ -147,59 +147,66 @@ void Algorithms::partition(int algorithm, int partitionCount, double imbal)
   //compute cut and report  
 }
 
+
+//ALGO 1//
 void Algorithms::LDGp2n(int partitionCount, double imbal)
 {
-	int* sizeArray = new int[this->partitionCount];
-	for (int i = 0; i < this->partitionCount; i++)
-	{
-		sizeArray[i] = 0;
-	}
- 
+  int* sizeArray = new int[this->partitionCount];
+  for (int i = 0; i < this->partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+    }
+  
   //Generate random read order
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
-  {
-    readOrder.push_back(i);
-  }
+    {
+      readOrder.push_back(i);
+    }
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>> partitionToNet(partitionCount);  
   
+  int ctr = -1;
+  
   double capacityConstraint = (imbal*this->vertexCount) / partitionCount;
-	for (int i : readOrder)
+  for (int i : readOrder)
+    {
+      std::cout << "Partitioning vertex: " << ++ctr << "/" << this->vertexCount << std::endl;
+      double maxScore = -1.0;
+      int maxIndex = -1;
+      for (int j = 0; j < partitionCount; j++)
 	{
-		double maxScore = -1.0;
-		int maxIndex = -1;
-		for (int j = 0; j < partitionCount; j++)
+	  int connectivity = this->p2nConnectivity(j, i, partitionToNet);
+	  std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
+	  double partOverCapacity = sizeArray[j] / capacityConstraint;
+	  double penalty = 1 - partOverCapacity;
+	  double score = penalty * connectivity;
+	  if (score > maxScore)
+	    {
+	      maxScore = score;
+	      maxIndex = j;
+	    }
+	  else if (score == maxScore)
+	    {
+	      if (sizeArray[j] < sizeArray[maxIndex])
 		{
-			int connectivity = this->p2nConnectivity(j, i, partitionToNet);
-			double partOverCapacity = sizeArray[j] / capacityConstraint;
-			double penalty = 1 - partOverCapacity;
-			double score = penalty * connectivity;
-			if (score > maxScore)
-			{
-				maxScore = score;
-				maxIndex = j;
-			}
-			else if (score == maxScore)
-			{
-				if (sizeArray[j] < sizeArray[maxIndex])
-				{
-					maxIndex = j;
-				}
-			}
+		  maxIndex = j;
 		}
-		partVec[i] = maxIndex;
-		sizeArray[maxIndex] += 1;
-    int maxIndexSize = partitionToNet[maxIndex].size() - 1;
-		for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-		{
-      if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
-        partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
-		}
+	    }
 	}
-	
-	delete[] sizeArray;
+      std::cout << "Vertex " << i << " assigned to partition " << maxIndex << std::endl;
+      partVec[i] = maxIndex;
+      sizeArray[maxIndex] += 1;
+      int maxIndexSize = partitionToNet[maxIndex].size() - 1;
+      for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+	{
+	  if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
+       partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
+	}
+    }
+  
+  delete sizeArray;
 }
 
 void Algorithms::LDGn2p(int partitionCount, double imbal)
