@@ -158,7 +158,7 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
   for (int i = 0; i < partitionCount; i++)
     {
       sizeArray[i] = 0;
-      std::cout << "SIZE ARRAY[ı]:" << sizeArray[i] << std::endl;
+      //std::cout << "SIZE ARRAY[ı]:" << sizeArray[i] << std::endl;
     }
   
   //Generate random read order
@@ -183,11 +183,11 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
 	{
 	  int connectivity = this->p2nConnectivity(j, i, partitionToNet);
 	  //int connectivity = 0;
-	  std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
+	  //std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
 	  double partOverCapacity = sizeArray[j] / capacityConstraint;
 	  double penalty = 1 - partOverCapacity;
 	  double score = penalty * connectivity;
-	  std::cout << "sizearray[j]: " << sizeArray[j] << " poc: " << partOverCapacity << " penalty: " << penalty << " score: " << score << std::endl;
+	  //std::cout << "sizearray[j]: " << sizeArray[j] << " poc: " << partOverCapacity << " penalty: " << penalty << " score: " << score << std::endl;
 	  if (score > maxScore)
 	    {
 	      maxScore = score;
@@ -224,9 +224,9 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
 
 void Algorithms::LDGn2p(int partitionCount, double imbal)
 {
-  int* sizeArray = new int[this->partitionCount];
-  int* indexArray = new int[this->partitionCount];
-  bool* markerArray = new bool[this->partitionCount];
+  int* sizeArray = new int[partitionCount];
+  int* indexArray = new int[partitionCount];
+  bool* markerArray = new bool[partitionCount];
   
   for (int i = 0; i < partitionCount; i++)
   {
