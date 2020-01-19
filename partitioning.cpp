@@ -75,10 +75,15 @@ Algorithms::Algorithms(std::string fileName) {
       this->sparseMatrix[i] = row;
       if (col != currentColumn)
     	{
-    	  this->sparseMatrixIndex[vIndex] = col;
+    	  this->sparseMatrixIndex[vIndex] = i;
     	  currentColumn = col;
     	  vIndex++;
     	}
+  }
+  
+  for(int i = 0; i < this->vertexCount + 1; i++)
+  {
+    std::cout << this->sparseMatrixIndex[i] << std::endl;
   }
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
