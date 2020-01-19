@@ -407,7 +407,8 @@ int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<s
 	int connectivityCount = 0;		
 	for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
 	{
-		connectivityCount += partitionToNet[partitionID].size();
+	  if(std::find(partitionToNet[partitionID]->begin(), partitionToNet[partitionID]->end(), this->sparseMatrix[k] != partitionToNet[partitionID]->end()))
+      connectivityCount += 1;
 	}
 
 	return connectivityCount;
