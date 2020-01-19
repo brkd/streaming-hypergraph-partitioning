@@ -243,28 +243,20 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
   }
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
-  std::vector<std::vector<int>*> netToPartition;
-  
-  for(int p = 0; p < this-> partitionCount; p++){
-    
-  }
-  
-  std::vector<int> tracker;
+  std::vector<std::vector<int>*> netToPartition;  
+  std::vector<int> tracker(10000, -1);
   double capacityConstraint = (imbal*this->vertexCount) / partitionCount;
   std::cout << "CP1" << std::endl;
   for (int i : readOrder) {
-    int maxIndex = this->n2pIndex(i, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition);
-    std::cout << "CP2" << std::endl;
-    partVec[i] = maxIndex;
-    sizeArray[maxIndex] += 1;
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
       int edge = this->sparseMatrix[k];
-      if(edge >= tracker.size())
+      if(edge > tracker.size() - 1)
       {
         int currNetIndex = tracker.size() - 1;
         for(int j = currNetIndex; j < edge; j++)
         {
+          tracker.push_back(-1);
           if(j == edge - 1)
           {
             std::vector<int>* newEdge = new std::vector<int>();
@@ -272,23 +264,27 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
             int n2pSize = netToPartition.size();
             netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
             tracker.push_back(n2pSize - 1);            
-          }
-          else
-            tracker.push_back(-1);
+          }            
         }
       }
-      else if(tracker[edge] == -1)
+      else if (tracker[edge] == -1)
       {
         std::vector<int>* newEdge = new std::vector<int>();
         netToPartition.push_back(newEdge);
         int n2pSize = netToPartition.size();
         netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
-        tracker[edge] = n2pSize - 1;            
+        tracker[edge] = n2pSize - 1;        
       }
-      
+    }
+    int maxIndex = this->n2pIndex(i, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker);
+    std::cout << "CP2" << std::endl;
+    partVec[i] = maxIndex;
+    sizeArray[maxIndex] += 1;
+    for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+    {
+      int edge = this->sparseMatrix[k];      
       if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
-        netToPartition[tracker[edge]]->push_back(maxIndex);
-      
+        netToPartition[tracker[edge]]->push_back(maxIndex);      
     }
  
     for (int i = 0; i < this->partitionCount; i++) {
@@ -465,16 +461,16 @@ int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<s
  }
   */
 
-int Algorithms::n2pIndex(int vertex, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition)
+int Algorithms::n2pIndex(int vertex, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker)
 {
   std::vector<int> encounterArray;
 	for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
 	{
 		int edge = this->sparseMatrix[k];
-		std::cout << "edge: " << edge << std::endl;
-		for (int i = 0; i < netToPartition[edge]->size(); i++)
+		int edgeIndex = tracker[edge];
+		for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
 		{
-			int part = netToPartition[edge]->at(i);
+			int part = netToPartition[edgeIndex]->at(i);
 			if (markerArray[part])
 				encounterArray[indexArray[part]] += 1;
 			else
