@@ -15,7 +15,7 @@ private:
 	//Attributes
 	int* sparseMatrix;
 	int* sparseMatrixIndex;
-  int* partVector; //pv[i] -> where i resides  
+  int* partVec; //pv[i] -> where i resides  
 
 	Bloom<int, int>* bloomFilter;	
   
@@ -26,13 +26,13 @@ private:
   
 	//Methods
   void LDGp2n(int, double);
-	void LDGn2p();
-	void LDGBF();
+	void LDGn2p(int, double);
+	void LDGBF(int, double);
 	void LDGMultiBF();
  
-	int calculateCuts();
-	int p2nConnectivity(int, int);
-	int n2pIndex(int, int*, int*, bool*, std::vector<int>);
+	//int calculateCuts();
+	int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
+	int n2pIndex(int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&);
 	int BFConnectivity(int, int);
 public:
 	//Constructors
