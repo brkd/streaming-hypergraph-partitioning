@@ -222,6 +222,7 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
   delete sizeArray;
 }
 
+//ALGO 2//
 void Algorithms::LDGn2p(int partitionCount, double imbal)
 {
   int* sizeArray = new int[partitionCount];
@@ -243,10 +244,17 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>*> netToPartition;
+  
+  for(int p = 0; p < this-> partitionCount; p++){
+    
+  }
+  
   std::vector<int> tracker;
   double capacityConstraint = (imbal*this->vertexCount) / partitionCount;
+  std::cout << "CP1" << std::endl;
   for (int i : readOrder) {
     int maxIndex = this->n2pIndex(i, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition);
+    std::cout << "CP2" << std::endl;
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
@@ -463,6 +471,7 @@ int Algorithms::n2pIndex(int vertex, double capacityConstraint, int* sizeArray, 
 	for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
 	{
 		int edge = this->sparseMatrix[k];
+		std::cout << "edge: " << edge << std::endl;
 		for (int i = 0; i < netToPartition[edge]->size(); i++)
 		{
 			int part = netToPartition[edge]->at(i);
