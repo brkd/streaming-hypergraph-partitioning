@@ -10,42 +10,31 @@
 int readBinaryGraph(FILE* bp, etype **pxadj, vtype **padj,
                     ewtype **pewghts, vwtype **pvwghts,
                     vtype* pnov) {
-
   fread(pnov, sizeof(vtype), 1, bp);
-
   (*pxadj) = (etype*)malloc(sizeof(etype) * (*pnov + 1));
   fread(*pxadj, sizeof(etype), (size_t)(*pnov + 1), bp);
-
   (*padj) = (vtype*)malloc(sizeof(vtype) * (*pxadj)[*pnov]);
   fread(*padj, sizeof(vtype), (size_t)(*pxadj)[*pnov], bp);
-
   (*pewghts) = (ewtype*)malloc(sizeof(ewtype) * (*pxadj)[*pnov]);
   fread(*pewghts, sizeof(ewtype), (size_t)(*pxadj)[*pnov], bp);
-
   (*pvwghts) = (vwtype*)malloc(sizeof(vwtype) * (*pnov));
   fread(*pvwghts, sizeof(vwtype), *pnov, bp);
-
   return 1;
 }
-
 int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
                      ewtype *ewghts, vwtype *vwghts,
                      vtype nov) {
-
   fwrite(&nov, sizeof(vtype), (size_t)1, bp);
   fwrite(xadj, sizeof(etype), (size_t)(nov + 1), bp);
   fwrite(adj, sizeof(vtype), (size_t)(xadj[nov]), bp);
   fwrite(ewghts, sizeof(ewtype), (size_t)(xadj[nov]), bp);
   fwrite(vwghts, sizeof(vwtype), (size_t)(nov), bp);
-
   return 1;
 }
-
   sprintf(bfile, "%s_bin/%s.bin", currFolder, gfile + dirindex + 1);
   printf("Binary file name: %s\n", bfile);
   bp = fopen(bfile, "rb");
   if (bp != NULL) { // read from binary 
-
 */
 
 std::default_random_engine generator;
@@ -80,6 +69,13 @@ Algorithms::Algorithms(std::string fileName) {
     	  vIndex++;
     	}
   }
+  
+  /*
+  for(int i = 0; i < this->vertexCount + 1; i++)
+  {
+    std::cout << this->sparseMatrixIndex[i] << std::endl;
+  }
+  */
 
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
@@ -159,7 +155,7 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
   for (int i = 0; i < partitionCount; i++)
     {
       sizeArray[i] = 0;
-      //std::cout << "SIZE ARRAY[ı]:" << sizeArray[i] << std::endl;
+      //std::cout << "SIZE ARRAY[i]:" << sizeArray[i] << std::endl;
     }
   
   //Generate random read order
@@ -220,7 +216,7 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
     std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
   }
 
-  delete[] sizeArray;
+  delete sizeArray;
 }
 
 //ALGO 2//
@@ -252,24 +248,38 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
       int edge = this->sparseMatrix[k];
-      if(edge > tracker.size() - 1)
+      std::cout << "CP2" << std::endl;
+      std::cout << "vertex: " << i << std::endl;
+      if(edge > tracker.size() - 1 )
       {
         int currNetIndex = tracker.size() - 1;
+	
         for(int j = currNetIndex; j < edge; j++)
         {
+	  std::cout << "CP3" << std::endl;
           tracker.push_back(-1);
           if(j == edge - 1)
           {
+	    std::cout << "CPif1" << std::endl;
             std::vector<int>* newEdge = new std::vector<int>();
+	    std::cout << "CPif2" << std::endl;
             netToPartition.push_back(newEdge);
+	    std::cout << "CPif3" << std::endl;
             int n2pSize = netToPartition.size();
+	    std::cout << "CPif4" << std::endl;
             netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
-            tracker[j] = n2pSize - 1;            
+	    std::cout << "CPif5" << std::endl;
+            //tracker.push_back(n2pSize - 1);            
+	    tracker[j] = n2pSize - 1;
+	    std::cout << "CPif6" << std::endl;
+	    if(n2pSize == 0)
+	      std::cout << "embrace the seg fault" << std::endl;
           }            
         }
       }
-      else if (tracker[edge] == -1)
+      if (tracker[edge] == -1)
       {
+	std::cout << "CPelse" << std::endl;
         std::vector<int>* newEdge = new std::vector<int>();
         netToPartition.push_back(newEdge);
         int n2pSize = netToPartition.size();
@@ -277,9 +287,11 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
         tracker[edge] = n2pSize - 1;        
       }
     }
+    std::cout << "CP4" << std::endl;
     int maxIndex = this->n2pIndex(i, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker);
-    std::cout << "CP2" << std::endl;
+    std::cout << "CP5" << std::endl;
     partVec[i] = maxIndex;
+    std::cout << "Assigned to partition: " << maxIndex << std::endl;
     sizeArray[maxIndex] += 1;
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
@@ -288,9 +300,9 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
         netToPartition[tracker[edge]]->push_back(maxIndex);      
     }
  
-    for (int i = 0; i < this->partitionCount; i++) {
+    for (int i = 0; i < partitionCount; i++) {
       indexArray[i] = -1;
-      markerArray[i] = false;
+      markerArray[i] = 0;
     }
   }
   
@@ -357,7 +369,6 @@ void Algorithms::LDGMultiBF()
 	{
 		sizeArray[i] = 0;
 	}
-
 	int partitions = this->partitionCount;
 	int layers = 0;
 	while (partitions != 0)
@@ -365,7 +376,6 @@ void Algorithms::LDGMultiBF()
 		layers++;
 		partitions = partitions >> 2;
 	}
-
 	int filterCount = pow(2, layers + 1) - 1;
 	std::vector<Bloom*> filters;
 	int bytes = 1000000;
@@ -373,7 +383,6 @@ void Algorithms::LDGMultiBF()
 	{
 		filters[i] = new Bloom(bytes, this->hashCount);
 	}
-
 	double maxScore = -1.0;
 	int maxIndex = -1;
 	for (int i : this->readOrder)
@@ -383,7 +392,6 @@ void Algorithms::LDGMultiBF()
 		{
 			connectivities[p] = 0;
 		}
-
 		for (int j = this->sparseMatrixIndex[i]; j < this->sparseMatrixIndex[i + 1]; j++)
 		{
 			for (int k = 1; k < filterCount; k++)
@@ -401,7 +409,6 @@ void Algorithms::LDGMultiBF()
 				}
 			}
 		}
-
 		delete[] connectivities;
 	}
 	
@@ -422,7 +429,6 @@ void Algorithms::LDGMultiBF()
 		}		
 		cuts += partCount - 1;
 	}
-
 	return cuts;
 }*/
 
@@ -450,7 +456,6 @@ int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<s
    int connectivityCount = 1;
      
    for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++){//For all edges vertex connected
-
        int net = this->sparseMatrix[k];
        int vec_size = partitionToNet[partitionID].size();
        for(int n = 0; n < vec_size; n++){ //Check if partition have that net
@@ -464,52 +469,69 @@ int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<s
 
 int Algorithms::n2pIndex(int vertex, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker)
 {
+  std::cout << "CALL" << std::endl;
   std::vector<int> encounterArray;
 	for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
-	{
-		int edge = this->sparseMatrix[k];
-		int edgeIndex = tracker[edge];
-		for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
+	  {
+	  int edge = this->sparseMatrix[k];
+	  std::cout << "edge: " << edge << std::endl;
+	  int edgeIndex = tracker[edge];
+	  std::cout << "CP7" << std::endl;
+	  std::cout << "edge index: " << edgeIndex << std::endl;
+	  for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
 		{
-			int part = netToPartition[edgeIndex]->at(i);
-			if (markerArray[part])
-				encounterArray[indexArray[part]] += 1;
-			else
-			{
-				encounterArray.push_back(1);
-				indexArray[part] = encounterArray.size() - 1;
-        markerArray[part] = true;
-			}
+		  int part = netToPartition[edgeIndex]->at(i);
+		  std::cout << "CP8" << std::endl;
+		  if (markerArray[part]){
+		    std::cout << "CP8.1" << std::endl;
+		    try{
+		      std::cout << indexArray[part] << std::endl;
+		      std::cout << "EA.size(): " << encounterArray.size() << std::endl;
+		      encounterArray[indexArray[part]] += 1;
+		    }
+		    catch(exception &e){
+		      std::cout << "CP8.2" << std::endl; 
+		    }
+		    std::cout << "CP8.25" << std::endl;
+		  }
+		  else
+		    {
+		      std::cout << "IN" << " k: " << k << std::endl;
+		      std::cout << "CP8.5" << std::endl;
+		      encounterArray.push_back(1);
+		      indexArray[part] = encounterArray.size() - 1;
+		      markerArray[part] = true;
+		    }
 		}
-	}
+	  }
 	double maxScore = -1.0;
 	int maxIndex = -1;
-  
-	for (int i = 0; i < this->partitionCount; i++)
-	{
-		int connectivity;
-		if (indexArray[i] == -1)
-			connectivity = 0;
-		else
-			connectivity = encounterArray[indexArray[i]];
-
-		double partOverCapacity = sizeArray[i] / capacityConstraint;
-		double penalty = 1 - partOverCapacity;
-		double score = penalty * connectivity;
-		if (score > maxScore)
-		{
-			maxScore = score;
-			maxIndex = i;
-		}
-		else if (score == maxScore)
-		{
-			if (sizeArray[i] < sizeArray[maxIndex])
-			{
-				maxIndex = i;
-			}
-		}
-	}
-
+	std::cout << "CP9" << std::endl;
+	for (int i = 0; i < partitionCount; i++)
+	  {
+	    int connectivity;
+	    if (indexArray[i] == -1)
+	      connectivity = 0;
+	    else
+	      connectivity = encounterArray[indexArray[i]];
+	    
+	    double partOverCapacity = sizeArray[i] / capacityConstraint;
+	    double penalty = 1 - partOverCapacity;
+	    double score = penalty * connectivity;
+	    if (score > maxScore)
+	      {
+		maxScore = score;
+		maxIndex = i;
+	      }
+	    else if (score == maxScore)
+	      {
+		if (sizeArray[i] < sizeArray[maxIndex])
+		  {
+		    maxIndex = i;
+		  }
+	      }
+	  }
+	
 	return maxIndex;
 }
 
@@ -525,13 +547,3 @@ int Algorithms::BFConnectivity(int partitionID, int vertex)
 
 	return connectivityCount;
 }
-
-
-
-
-
-
-
-
-
-
