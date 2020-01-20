@@ -1,6 +1,7 @@
 #include "partitioning.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <algorithm>
 #include <stdlib.h>
 #include <cmath>
@@ -44,7 +45,23 @@ std::uniform_int_distribution<int> distribution(0,16);
 Algorithms::Algorithms(std::string fileName) {
   //Read matrix
   std::ifstream fin(fileName);
-  while(fin.peek() == '%') fin.ignore(2048, '\n');
+  std::string comment;
+  bool isPattern = false;
+  while(fin.peek() == '%')
+  {    
+    if(!isPattern)
+    {
+      std::getline(fin, comment);
+      std::istringstream iss(comment);
+      if (iss.str().find("pattern") != std::string::npos)
+      {
+        isPattern = true;
+        std::cout << "Pattern Matrix" << std::endl;      
+      }   
+    }
+    else
+      fin.ignore(2048, '\n');
+  }
   fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
   std::cout << "Row count: " << this->edgeCount << " Column count: " << this->vertexCount << " Non-zero count: " << this->nonzeroCount << std::endl;
 
@@ -55,20 +72,39 @@ Algorithms::Algorithms(std::string fileName) {
   //Init sparse matrix representation
   this->sparseMatrix = new int[this->nonzeroCount + 1];
   this->sparseMatrixIndex = new int[this->vertexCount + 1];
-  sparseMatrix[0] = 0;
+  sparseMatrixIndex[0] = 0;
+
   int vIndex = 0, row, col, currentColumn = -1;
-  double value;	
-  for(int i = 0; i < this->nonzeroCount; i++)
+  if(!isPattern)
   {
+    double value;	
+    for(int i = 0; i < this->nonzeroCount + 1; i++)
+    {      
       fin >> row >> col >> value;
-      this->sparseMatrix[i] = row;
+      this->sparseMatrix[i] = row - 1;
       if (col != currentColumn)
-    	{
-    	  this->sparseMatrixIndex[vIndex] = i;
-    	  currentColumn = col;
-    	  vIndex++;
-    	}
+      {
+  	    this->sparseMatrixIndex[vIndex] = i;
+  	    currentColumn = col;
+  	    vIndex++;
+      }
+    }
   }
+  else
+  {
+    for(int i = 0; i < this->nonzeroCount; i++)
+    {            
+      fin >> row >> col;
+      this->sparseMatrix[i] = row - 1;
+      if (col != currentColumn)
+      {
+  	    this->sparseMatrixIndex[vIndex] = i;
+  	    currentColumn = col;
+  	    vIndex++;
+      }
+    }
+  }
+  
   
   /*
   for(int i = 0; i < this->vertexCount + 1; i++)
@@ -76,7 +112,7 @@ Algorithms::Algorithms(std::string fileName) {
     std::cout << this->sparseMatrixIndex[i] << std::endl;
   }
   */
-
+  std::cout << "son" << std::endl;
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
   std::cout << "Matrix integration: DONE!" << std::endl;	
