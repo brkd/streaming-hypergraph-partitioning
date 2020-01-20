@@ -32,7 +32,7 @@ private:
  
 	//int calculateCuts();
 	int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
-	int n2pIndex(int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
+	int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
 	int BFConnectivity(int, int);
 public:
 	//Constructors

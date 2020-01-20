@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     auto start = std::chrono::high_resolution_clock::now();
     Partitioner->partition(algorithm, partitionCount, imbal);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Run: "<< i << " - Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    std::cout << "Run: "<< i + 1 << " - Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   
   return 0;	
