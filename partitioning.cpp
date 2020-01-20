@@ -80,11 +80,7 @@ Algorithms::Algorithms(std::string fileName) {
     	  vIndex++;
     	}
   }
-  
-  for(int i = 0; i < this->vertexCount + 1; i++)
-  {
-    std::cout << this->sparseMatrixIndex[i] << std::endl;
-  }
+
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
   std::cout << "Matrix integration: DONE!" << std::endl;	
@@ -224,7 +220,7 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
     std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
   }
 
-  delete sizeArray;
+  delete[] sizeArray;
 }
 
 //ALGO 2//
@@ -268,7 +264,7 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
             netToPartition.push_back(newEdge);
             int n2pSize = netToPartition.size();
             netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
-            tracker.push_back(n2pSize - 1);            
+            tracker[j] = n2pSize - 1;            
           }            
         }
       }
