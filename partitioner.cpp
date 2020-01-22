@@ -44,6 +44,8 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 Partitioner::Partitioner(std::string fileName){
   //Read matrix
   std::ifstream fin(fileName);
+  std::string comment;
+  std::getline(fin, comment);
   
   
   while(fin.peek() == '%')
@@ -63,7 +65,10 @@ Partitioner::Partitioner(std::string fileName){
   //Init sparse matrix representation
   this->sparseMatrixIndex = new int[this->vertexCount + 1];
   sparseMatrixIndex[0] = 0;
-  this->sparseMatrix = new int[this->nonzeroCount + 1];
+  if(comment.find("symmetric") == std::string::npos)
+    this->sparseMatrix = new int[this->nonzeroCount + 1];
+  else
+    this->sparseMatrix = new int[this->nonzeroCount*2 + 1];
   
   fin.close();
   
@@ -204,6 +209,7 @@ void Partitioner::read_graph(std::string fileName){
       for(int i = 0; i < this->nonzeroCount + 1; i++)
 	{      
 	    fin >> row >> col >> val1;
+	    //ALSO NEED TO ADD (j,i) as well as (i,j)
 	    this->sparseMatrix[i] = row - 1;
 	    if (col != currentColumn)
 	      {
