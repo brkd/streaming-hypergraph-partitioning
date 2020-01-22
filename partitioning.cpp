@@ -111,9 +111,10 @@ Algorithms::Algorithms(std::string fileName) {
   this->bloomFilter = nullptr;
   
   //Init sparse matrix representation
-  this->sparseMatrix = new int[this->nonzeroCount + 1];
   this->sparseMatrixIndex = new int[this->vertexCount + 1];
   sparseMatrixIndex[0] = 0;
+  this->sparseMatrix = new int[this->nonzeroCount + 1];
+  
   
   int vIndex = 0, row, col, currentColumn = -1;
   if(!_pattern)
@@ -153,6 +154,7 @@ Algorithms::Algorithms(std::string fileName) {
     std::cout << this->sparseMatrixIndex[i] << std::endl;
   }
   */
+
   std::cout << "son" << std::endl;
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
