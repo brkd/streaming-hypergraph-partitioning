@@ -41,15 +41,65 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 */
 
 //Public methods
-Partitioner::Partitioner(std::string fileName){
+Algorithms::Algorithms(std::string fileName) {
   //Read matrix
   std::ifstream fin(fileName);
+  std::cout << "sa" << std::endl;
   
+  //FIELD//
+  bool _real = false;
+  bool _integer = false;
+  bool _complex = false;
+  bool _pattern = false;
+  //FIELD//
+  
+  //SYMMETRY//
+  bool _general = false;
+  bool _symmetric = false;
+  //SYMMETRY//
+  
+  //if (iss.str().find("pattern") != std::string::npos)
+  
+  //Evaluate type
+  std::string comment;
+  std::getline(fin, comment);
+  //std::istringstream iss(comment);
+  std::cout << "Type: " << comment << std::endl;
+  
+  if(comment.find("real") != std::string::npos)
+    _real = true;
+  
+  if(comment.find("integer") != std::string::npos)
+    _integer = true;
+
+  if(comment.find("complex") != std::string::npos)
+    _complex = true;
+  
+  if(comment.find("pattern") != std::string::npos)
+    _pattern = true;
+  
+  if(comment.find("general") != std::string::npos)
+    _general = true;
+  
+  if(comment.find("symmetric") != std::string::npos)
+    _symmetric = true;
+  
+  #ifdef DEBUG
+  std::cout << "Matrix Type: " << std::endl;
+  std::cout << "Real: " << _real << std::endl;
+  std::cout << "Integer: " << _integer << std::endl;
+  std::cout << "Complex: " << _complex << std::endl;
+  std::cout << "Pattern: " << _pattern << std::endl;
+  std::cout << "General: " << _general << std::endl;
+  std::cout << "Symmetric: " << _symmetric << std::endl;
+#endif
+  
+  //exit(1);
   
   while(fin.peek() == '%')
-    {    
-      fin.ignore(2048, '\n');
-    }  
+  {    
+    fin.ignore(2048, '\n');
+  }  
   
   //Getting net, pin, non-zero counts
   fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
@@ -65,217 +115,54 @@ Partitioner::Partitioner(std::string fileName){
   sparseMatrixIndex[0] = 0;
   this->sparseMatrix = new int[this->nonzeroCount + 1];
   
-  fin.close();
-  
-  this->read_graph(fileName);
-  
-}
-  
-
-void Partitioner::read_graph(std::string fileName){
-    
-  //FIELD//
-  bool _real = false;
-  bool _integer = false;
-  bool _complex = false;
-  bool _pattern = false;
-  //FIELD//
-  
-  //SYMMETRY//
-  bool _general = false;
-  bool _symmetric = false;
-  //SYMMETRY//
-  
-  
-  //Evaluate type
-  std::ifstream fin(fileName);
-  std::string comment;
-  std::getline(fin, comment);
-  std::cout << "Type: " << comment << std::endl;
-  
-  if(comment.find("real") != std::string::npos)
-    _real = true;
-  
-  if(comment.find("integer") != std::string::npos)
-    _integer = true;
-  
-  if(comment.find("complex") != std::string::npos)
-    _complex = true;
-  
-  if(comment.find("pattern") != std::string::npos)
-    _pattern = true;
-  
-  if(comment.find("general") != std::string::npos)
-    _general = true;
-  
-  if(comment.find("symmetric") != std::string::npos)
-    _symmetric = true;
-  
-#ifdef DEBUG
-  std::cout << "Matrix Type: " << std::endl;
-  std::cout << "Real: " << _real << std::endl;
-  std::cout << "Integer: " << _integer << std::endl;
-  std::cout << "Complex: " << _complex << std::endl;
-  std::cout << "Pattern: " << _pattern << std::endl;
-  std::cout << "General: " << _general << std::endl;
-  std::cout << "Symmetric: " << _symmetric << std::endl;
-#endif
-
-
-  while(fin.peek() == '%')
-    {    
-      fin.ignore(2048, '\n');
-    }  
-  std::getline(fin, comment);//We already acquired that values
-  
   
   int vIndex = 0, row, col, currentColumn = -1;
-  float val1;
-  float val2;
-  int val3;
-  if(_general){	
-    
-    if(_real){
-      
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val1;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
-	    }
-	}
-    }
-    
-    if(_integer){
-      
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val2;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
-	    }
-	}  
-    }
-    
-    
-    if(_pattern){
-      for(int i = 0; i < this->nonzeroCount; i++)
-	{            
-	  fin >> row >> col;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
-	    }
-	}
-    }
-    
-    if(_complex){
-      
-      
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val1 >> val2;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
-	    }
-	}
+  if(!_pattern)
+  {
+    double value;	
+    for(int i = 0; i < this->nonzeroCount + 1; i++)
+    {      
+      fin >> row >> col >> value;
+      this->sparseMatrix[i] = row - 1;
+      if (col != currentColumn)
+      {
+  	    this->sparseMatrixIndex[vIndex] = i;
+  	    currentColumn = col;
+  	    vIndex++;
+      }
     }
   }
+  else
+  {
+    for(int i = 0; i < this->nonzeroCount; i++)
+    {            
+      fin >> row >> col;
+      this->sparseMatrix[i] = row - 1;
+      if (col != currentColumn)
+      {
+  	    this->sparseMatrixIndex[vIndex] = i;
+  	    currentColumn = col;
+  	    vIndex++;
+      }
+    }
+  }  
   
-  if(_symmetric){
-    
-    if(_real){
-     
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	    fin >> row >> col >> val1;
-	    this->sparseMatrix[i] = row - 1;
-	    if (col != currentColumn)
-	      {
-		this->sparseMatrixIndex[vIndex] = i;
-		currentColumn = col;
-		vIndex++;
-	      }
-	}
-    }
-    
-    if(_integer){
-      
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val2;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
-	    }
-	}  
-    }
-    
-    if(_pattern){
-      for(int i = 0; i < this->nonzeroCount; i++)
-	{            
-	    fin >> row >> col;
-	    this->sparseMatrix[i] = row - 1;
-	    if (col != currentColumn)
-	      {
-		this->sparseMatrixIndex[vIndex] = i;
-		currentColumn = col;
-		vIndex++;
-	      }
-	}
-    }
-    
-    if(_complex){
-      
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val1 >> val2;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
-	    }
-	}
-    }
+  /*
+  for(int i = 0; i < this->vertexCount + 1; i++)
+  {
+    std::cout << this->sparseMatrixIndex[i] << std::endl;
   }
-  
-  
-  if(!_general && !_symmetric)
-    {
-      std::cout << "I believe a problem happened during reading fields of the matrix" << std::endl;
-      exit(1);
-    }
-    
-  
+  */
+
+  std::cout << "son" << std::endl;
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
   std::cout << "Matrix integration: DONE!" << std::endl;	
 }
 
-
 Partitioner::Partitioner(std::string fileName, int byteSize, int hashCount)
 {
-  //Read matrix
+	//Read matrix
 	std::ifstream fin(fileName);
 	while (fin.peek() == '%') fin.ignore(2048, '\n');
 	fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
@@ -291,10 +178,22 @@ Partitioner::Partitioner(std::string fileName, int byteSize, int hashCount)
 	this->sparseMatrix = new int[this->nonzeroCount + 1];
 	this->sparseMatrixIndex = new int[this->vertexCount + 1];
 	sparseMatrix[0] = 0;
-	
-	fin.close();
-	this->read_graph(fileName);
-
+	int vIndex = 0, row, col, currentColumn = -1;
+	double value;
+	for (int i = 0; i < this->nonzeroCount; i++)
+	{
+		fin >> row >> col >> value;
+		this->sparseMatrix[i] = row;
+		if (col != currentColumn)
+		{
+			this->sparseMatrixIndex[vIndex] = col;
+			currentColumn = col;
+			vIndex++;
+		}
+	}
+	this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
+	this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
+	std::cout << "Matrix integration: DONE!" << std::endl;
 }
 
 Partitioner::~Partitioner()

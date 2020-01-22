@@ -26,6 +26,8 @@ class Partitioner
   int nonzeroCount;
   
   //Methods
+  void read_graph(std::string fileName);
+
   void LDGp2n(int, double);
   void LDGn2p(int, int, double);
   void LDGBF(int, double);
