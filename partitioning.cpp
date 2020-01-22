@@ -96,10 +96,9 @@ Algorithms::Algorithms(std::string fileName) {
   //exit(1);
   
   while(fin.peek() == '%')
-    {    
-      fin.ignore(2048, '\n');
-    }
-  
+  {    
+    fin.ignore(2048, '\n');
+  }  
   
   //Getting net, pin, non-zero counts
   fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
@@ -144,8 +143,7 @@ Algorithms::Algorithms(std::string fileName) {
   	    vIndex++;
       }
     }
-  }
-  
+  }  
   
   /*
   for(int i = 0; i < this->vertexCount + 1; i++)
@@ -205,20 +203,20 @@ Algorithms::~Algorithms()
     delete this->bloomFilter;
 }
 
-void Algorithms::partition(int algorithm, int partitionCount, double imbal)
+void Algorithms::partition(int algorithm, int partitionCount, int slackValue, double imbal)
 { 
   //Partition
   if(algorithm == 1)
   {
-    LDGp2n(partitionCount, imbal);
+    this->LDGp2n(partitionCount, imbal);
   }
   else if(algorithm == 2)
   {
-    LDGn2p(partitionCount, imbal);  
+    this->LDGn2p(partitionCount, slackValue, imbal);  
   }
   else if(algorithm == 3)
   {
-    LDGBF(partitionCount, imbal);
+    this->LDGBF(partitionCount, imbal);
   }
 
   //compute cut and report  
@@ -230,17 +228,17 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
-    {
-      sizeArray[i] = 0;
-      //std::cout << "SIZE ARRAY[i]:" << sizeArray[i] << std::endl;
-    }
+  {
+    sizeArray[i] = 0;
+    //std::cout << "SIZE ARRAY[i]:" << sizeArray[i] << std::endl;
+  }
   
   //Generate random read order
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
-    {
-      readOrder.push_back(i);
-    }
+  {
+    readOrder.push_back(i);
+  }
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>> partitionToNet(partitionCount);  
@@ -249,55 +247,56 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
   
   double capacityConstraint = (imbal*this->vertexCount) / partitionCount;
   for (int i : readOrder)
-    {
-      std::cout << "Partitioning vertex: " << ++ctr << "/" << this->vertexCount << std::endl;
-      double maxScore = -1.0;
-      int maxIndex = -1;
-      for (int j = 0; j < partitionCount; j++)
-	{
-	  int connectivity = this->p2nConnectivity(j, i, partitionToNet);
-	  //int connectivity = 0;
-	  //std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
-	  double partOverCapacity = sizeArray[j] / capacityConstraint;
-	  double penalty = 1 - partOverCapacity;
-	  double score = penalty * connectivity;
-	  //std::cout << "sizearray[j]: " << sizeArray[j] << " poc: " << partOverCapacity << " penalty: " << penalty << " score: " << score << std::endl;
-	  if (score > maxScore)
+  {
+    double maxScore = -1.0;
+    int maxIndex = -1;
+    for (int j = 0; j < partitionCount; j++)
+	  {
+	    int connectivity = this->p2nConnectivity(j, i, partitionToNet);
+	    //int connectivity = 0;
+	    //std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
+	    double partOverCapacity = sizeArray[j] / capacityConstraint;
+	    double penalty = 1 - partOverCapacity;
+	    double score = penalty * connectivity;
+	    //std::cout << "sizearray[j]: " << sizeArray[j] << " poc: " << partOverCapacity << " penalty: " << penalty << " score: " << score << std::endl;
+	    if (score > maxScore)
 	    {
 	      maxScore = score;
 	      maxIndex = j;
 	    }
-	  else if (score == maxScore)
+	    else if (score == maxScore)
 	    {
 	      if (sizeArray[j] < sizeArray[maxIndex])
-		{
-		  maxIndex = j;
-		}
+		    {
+		      maxIndex = j;
+		    }
 	    }
-	}
-      std::cout << "Vertex " << i << " assigned to partition " << maxIndex << std::endl;
-      partVec[i] = maxIndex;
-      sizeArray[maxIndex] += 1;
-      int maxIndexSize = partitionToNet[maxIndex].size() - 1;
-
-
-      for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-	{
-	  if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
-       partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
-	}
-    }
+	  }
+    partVec[i] = maxIndex;
+    sizeArray[maxIndex] += 1;
+    int maxIndexSize = partitionToNet[maxIndex].size() - 1;
+    
+    for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+	  {
+	    if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
+         partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
+	  }
+    
+  }
   
+  std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
+  std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
+  
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
   }
 
-  delete sizeArray;
+  delete[] sizeArray;
 }
 
 //ALGO 2//
-void Algorithms::LDGn2p(int partitionCount, double imbal)
+void Algorithms::LDGn2p(int partitionCount, int slackValue, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   int* indexArray = new int[partitionCount];
@@ -319,9 +318,14 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
   
   std::vector<std::vector<int>*> netToPartition;  
   std::vector<int> tracker(10000, -1);
-  double capacityConstraint = (imbal*this->vertexCount) / partitionCount;
-  
+  double capacityConstraint;
+  int currVertexCount = 0;
   for (int i : readOrder) {
+    currVertexCount++;
+    if((imbal*currVertexCount) >= slackValue)
+      capacityConstraint = (imbal*currVertexCount) / partitionCount;
+    else
+      capacityConstraint = slackValue / partitionCount;
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
       int edge = this->sparseMatrix[k];
@@ -367,6 +371,10 @@ void Algorithms::LDGn2p(int partitionCount, double imbal)
     }
   }
   
+  std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
+  std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
+  std::cout << "******PART SIZES*******" << std::endl;
+    
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
   }
@@ -507,9 +515,6 @@ int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<s
       if(std::find(partitionToNet[partitionID].begin(), partitionToNet[partitionID].end(), this->sparseMatrix[k]) != partitionToNet[partitionID].end())
 	connectivityCount += 1;
 	}
-  
-  if(connectivityCount > 3)
-    std::cout << "cc: " << connectivityCount << std::endl;
   return connectivityCount;
 }
  

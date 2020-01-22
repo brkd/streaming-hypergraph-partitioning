@@ -7,6 +7,7 @@
 
 #define MAXPARTNO 4096
 #define MAXIMBAL 1.20
+#define MAXSLACKVAL 1000
 #define INITVECSIZE 3
 
 class Algorithms
@@ -23,10 +24,10 @@ private:
 	int vertexCount;
 	int edgeCount;
 	int nonzeroCount;
-  
+ 
 	//Methods
   void LDGp2n(int, double);
-	void LDGn2p(int, double);
+	void LDGn2p(int, int, double);
 	void LDGBF(int, double);
 	void LDGMultiBF();
  
@@ -43,6 +44,6 @@ public:
 	~Algorithms();
 
 	//Methods
-	void partition(int, int, double);
+	void partition(int, int, int, double);
 };
 #endif
