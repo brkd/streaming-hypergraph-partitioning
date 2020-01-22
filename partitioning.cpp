@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <cmath>
 
+#define DEBUG
+
 
 /*
 int readBinaryGraph(FILE* bp, etype **pxadj, vtype **padj,
@@ -38,33 +40,72 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
   if (bp != NULL) { // read from binary 
 */
 
-std::default_random_engine generator;
-std::uniform_int_distribution<int> distribution(0,16);
-
 //Public methods
 Algorithms::Algorithms(std::string fileName) {
   //Read matrix
   std::ifstream fin(fileName);
+  
+  //FIELD//
+  bool _real = false;
+  bool _integer = false;
+  bool _complex = false;
+  bool _pattern = false;
+  //FIELD//
+  
+  //SYMMETRY//
+  bool _general = false;
+  bool _symmetric = false;
+  //SYMMETRY//
+  
+  //if (iss.str().find("pattern") != std::string::npos)
+  
+  //Evaluate type
   std::string comment;
-  bool isPattern = false;
-  while(fin.peek() == '%')
-  {    
-    if(!isPattern)
-    {
-      std::getline(fin, comment);
-      std::istringstream iss(comment);
-      if (iss.str().find("pattern") != std::string::npos)
-      {
-        isPattern = true;
-        std::cout << "Pattern Matrix" << std::endl;      
-      }   
-    }
-    else
-      fin.ignore(2048, '\n');
-  }
-  fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
-  std::cout << "Row count: " << this->edgeCount << " Column count: " << this->vertexCount << " Non-zero count: " << this->nonzeroCount << std::endl;
+  std::getline(fin, comment);
+  //std::istringstream iss(comment);
+  std::cout << "Type: " << comment << std::endl;
+  
+  if(comment.find("real") != std::string::npos)
+    _real = true;
+  
+  if(comment.find("integer") != std::string::npos)
+    _integer = true;
 
+  if(comment.find("complex") != std::string::npos)
+    _complex = true;
+  
+  if(comment.find("pattern") != std::string::npos)
+    _pattern = true;
+  
+  if(comment.find("general") != std::string::npos)
+    _general = true;
+  
+  if(comment.find("symmetric") != std::string::npos)
+    _symmetric = true;
+  
+  #ifdef DEBUG
+  std::cout << "Matrix Type: " << std::endl;
+  std::cout << "Real: " << _real << std::endl;
+  std::cout << "Integer: " << _integer << std::endl;
+  std::cout << "Complex: " << _complex << std::endl;
+  std::cout << "Pattern: " << _pattern << std::endl;
+  std::cout << "General: " << _general << std::endl;
+  std::cout << "Symmetric: " << _symmetric << std::endl;
+#endif
+  
+  //exit(1);
+  
+  while(fin.peek() == '%')
+    {    
+      fin.ignore(2048, '\n');
+    }
+  
+  
+  //Getting net, pin, non-zero counts
+  fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
+  
+  std::cout << "Row count: " << this->edgeCount << " Column count: " << this->vertexCount << " Non-zero count: " << this->nonzeroCount << std::endl;
+  
   //Init partition matrix
   this->partVec = new int[this->vertexCount];  
   this->bloomFilter = nullptr;
@@ -73,9 +114,9 @@ Algorithms::Algorithms(std::string fileName) {
   this->sparseMatrix = new int[this->nonzeroCount + 1];
   this->sparseMatrixIndex = new int[this->vertexCount + 1];
   sparseMatrixIndex[0] = 0;
-
+  
   int vIndex = 0, row, col, currentColumn = -1;
-  if(!isPattern)
+  if(!_pattern)
   {
     double value;	
     for(int i = 0; i < this->nonzeroCount + 1; i++)
