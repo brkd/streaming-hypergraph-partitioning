@@ -1,4 +1,4 @@
-#include "partitioning.h"
+#include "partitioner.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -41,9 +41,10 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 */
 
 //Public methods
-Algorithms::Algorithms(std::string fileName) {
+Partitioner::Partitioner(std::string fileName) {
   //Read matrix
   std::ifstream fin(fileName);
+  std::cout << "sa" << std::endl;
   
   //FIELD//
   bool _real = false;
@@ -159,7 +160,7 @@ Algorithms::Algorithms(std::string fileName) {
   std::cout << "Matrix integration: DONE!" << std::endl;	
 }
 
-Algorithms::Algorithms(std::string fileName, int byteSize, int hashCount)
+Partitioner::Partitioner(std::string fileName, int byteSize, int hashCount)
 {
 	//Read matrix
 	std::ifstream fin(fileName);
@@ -195,7 +196,7 @@ Algorithms::Algorithms(std::string fileName, int byteSize, int hashCount)
 	std::cout << "Matrix integration: DONE!" << std::endl;
 }
 
-Algorithms::~Algorithms()
+Partitioner::~Partitioner()
 {
   delete[] this->partVec;
   delete[] this->sparseMatrix;
@@ -205,7 +206,7 @@ Algorithms::~Algorithms()
     delete this->bloomFilter;
 }
 
-void Algorithms::partition(int algorithm, int partitionCount, int slackValue, double imbal)
+void Partitioner::partition(int algorithm, int partitionCount, int slackValue, double imbal)
 { 
   //Partition
   if(algorithm == 1)
@@ -226,7 +227,7 @@ void Algorithms::partition(int algorithm, int partitionCount, int slackValue, do
 
 
 //ALGO 1//
-void Algorithms::LDGp2n(int partitionCount, double imbal)
+void Partitioner::LDGp2n(int partitionCount, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
@@ -298,7 +299,7 @@ void Algorithms::LDGp2n(int partitionCount, double imbal)
 }
 
 //ALGO 2//
-void Algorithms::LDGn2p(int partitionCount, int slackValue, double imbal)
+void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   int* indexArray = new int[partitionCount];
@@ -386,7 +387,7 @@ void Algorithms::LDGn2p(int partitionCount, int slackValue, double imbal)
   delete[] markerArray;
 }
 
-void Algorithms::LDGBF(int partitionCount, double imbal)
+void Partitioner::LDGBF(int partitionCount, double imbal)
 {
 	int* sizeArray = new int[partitionCount];
 	for (int i = 0; i < partitionCount; i++)
@@ -437,7 +438,7 @@ void Algorithms::LDGBF(int partitionCount, double imbal)
 	delete[] sizeArray;
 }
 
-void Algorithms::LDGMultiBF()
+void Partitioner::LDGMultiBF()
 {
   /*	int* sizeArray = new int[this->partitionCount];
 	for (int i = 0; i < this->partitionCount; i++)
@@ -492,7 +493,7 @@ void Algorithms::LDGMultiBF()
 	*/
 }
 
-/*int Algorithms::calculateCuts()
+/*int Partitioner::calculateCuts()
 {
 	int cuts = 0;
 	for (std::vector<int> edge : this->netToPartition)
@@ -509,7 +510,7 @@ void Algorithms::LDGMultiBF()
 
 //Private methods
  
-int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet)
+int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet)
 {
   int connectivityCount = 0;		
   for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
@@ -523,7 +524,7 @@ int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<s
 
   ///Manual connectivity
   /*
- int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet){
+ int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet){
    
    int connectivityCount = 1;
      
@@ -539,7 +540,7 @@ int Algorithms::p2nConnectivity(int partitionID, int vertex, const std::vector<s
  }
   */
 
-int Algorithms::n2pIndex(int vertex, int partitionCount, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker)
+int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker)
 {
   std::vector<int> encounterArray;
 	for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
@@ -591,7 +592,7 @@ int Algorithms::n2pIndex(int vertex, int partitionCount, double capacityConstrai
 	return maxIndex;
 }
 
-int Algorithms::BFConnectivity(int partitionID, int vertex)
+int Partitioner::BFConnectivity(int partitionID, int vertex)
 {
 	int connectivityCount = 0;
 	for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)

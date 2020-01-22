@@ -1,10 +1,11 @@
-#include "partitioning.cpp"
+#include "partitioner.cpp"
 #include <chrono>
 
 int main(int argc, char** argv) {
   std::string fileName;
   int partitionCount, randomizationCount;
   int algorithm = atoi(argv[1]);
+
   if (algorithm != 1 && algorithm != 2 && algorithm != 3) {
     std::cout << "wrong algorithm" << endl;
     exit(1);
@@ -28,14 +29,17 @@ int main(int argc, char** argv) {
 
   int byteSize;
   int hashCount;
-  Algorithms* Partitioner;
+  Partitioner* partitioner;
+  
+  
+  
   if(algorithm == 3)
   { 
     if(argc > 8)
     {
       byteSize = atoi(argv[7]);
       hashCount = atoi(argv[8]);
-      Partitioner = new Algorithms(fileName, byteSize, hashCount);
+      partitioner = new Partitioner(fileName, byteSize, hashCount);
     }
     else
     {
@@ -43,16 +47,16 @@ int main(int argc, char** argv) {
     }
   }
   else
-    Partitioner = new Algorithms(fileName);
+    partitioner = new Partitioner(fileName);
   
   for(int i = 0; i < randomizationCount; i++)
   {
     auto start = std::chrono::high_resolution_clock::now();
-    Partitioner->partition(algorithm, partitionCount, slackValue, imbal);
+    partitioner->partition(algorithm, partitionCount, slackValue, imbal);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Run: "<< i + 1 << " - Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   
-  delete Partitioner;
+  delete partitioner;
   return 0;	
 }

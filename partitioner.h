@@ -1,5 +1,5 @@
-#ifndef _PARTITIONING_H
-#define _PARTITIONING_H
+#ifndef _PARTITIONER_H
+#define _PARTITIONER_H
 
 #include "bloomclass.h"
 #include <vector>
@@ -10,7 +10,7 @@
 #define MAXSLACKVAL 1000
 #define INITVECSIZE 3
 
-class Algorithms
+class Partitioner
 {
 private:
 	//Attributes
@@ -37,11 +37,11 @@ private:
 	int BFConnectivity(int, int);
 public:
 	//Constructors
-	Algorithms(std::string);
-	Algorithms(std::string, int, int);
+	Partitioner(std::string);
+	Partitioner(std::string, int, int);
  
 	//Destructor
-	~Algorithms();
+	~Partitioner();
 
 	//Methods
 	void partition(int, int, int, double);
