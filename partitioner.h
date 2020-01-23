@@ -28,9 +28,9 @@ class Partitioner
   //Methods
   void read_graph(std::string fileName);
 
-  void LDGp2n(int, double);
+  void LDGp2n(int, int, double);
   void LDGn2p(int, int, double);
-  void LDGBF(int, double);
+  void LDGBF(int, int, double);
   void LDGMultiBF();
   
   //int calculateCuts();

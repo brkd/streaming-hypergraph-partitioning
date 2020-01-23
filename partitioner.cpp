@@ -49,9 +49,9 @@ Partitioner::Partitioner(std::string fileName){
   
   
   while(fin.peek() == '%')
-    {    
-      fin.ignore(2048, '\n');
-    }  
+  {    
+    fin.ignore(2048, '\n');
+  }  
   
   //Getting net, pin, non-zero counts
   fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
@@ -128,9 +128,9 @@ void Partitioner::read_graph(std::string fileName){
 
 
   while(fin.peek() == '%')
-    {    
-      fin.ignore(2048, '\n');
-    }  
+  {    
+    fin.ignore(2048, '\n');
+  }  
   std::getline(fin, comment);//We already acquired that values
   
   
@@ -143,62 +143,62 @@ void Partitioner::read_graph(std::string fileName){
     if(_real){
       
       for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val1;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
+	    {      
+	      fin >> row >> col >> val1;
+	      this->sparseMatrix[i] = row - 1;
+	      if (col != currentColumn)
+	      {
+	        this->sparseMatrixIndex[vIndex] = i;
+	        currentColumn = col;
+	        vIndex++;
+	      }
 	    }
-	}
     }
     
     if(_integer){
       
       for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val2;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
-	    }
-	}  
+	    {      
+	      fin >> row >> col >> val2;
+	      this->sparseMatrix[i] = row - 1;
+	      if (col != currentColumn)
+	      {
+	        this->sparseMatrixIndex[vIndex] = i;
+	        currentColumn = col;
+	        vIndex++;
+	      }
+	    }  
     }
     
     
     if(_pattern){
+    
       for(int i = 0; i < this->nonzeroCount; i++)
-	{            
-	  fin >> row >> col;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
+	    {            
+	      fin >> row >> col;
+	      this->sparseMatrix[i] = row - 1;
+	      if (col != currentColumn)
+	      {
+	        this->sparseMatrixIndex[vIndex] = i;
+	        currentColumn = col;
+	        vIndex++;
+	      }
 	    }
-	}
     }
     
-    if(_complex){
-      
+    if(_complex){      
       
       for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val1 >> val2;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
+	    {      
+	      fin >> row >> col >> val1 >> val2;
+	      this->sparseMatrix[i] = row - 1;
+	      if (col != currentColumn)
+	      {
+	        this->sparseMatrixIndex[vIndex] = i;
+	        currentColumn = col;
+	        vIndex++;
+	      }
 	    }
-	}
     }
   }
   
@@ -207,70 +207,69 @@ void Partitioner::read_graph(std::string fileName){
     if(_real){
      
       for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	    fin >> row >> col >> val1;
-	    //ALSO NEED TO ADD (j,i) as well as (i,j)
-	    this->sparseMatrix[i] = row - 1;
-	    if (col != currentColumn)
+	    {      
+	      fin >> row >> col >> val1;
+	      //ALSO NEED TO ADD (j,i) as well as (i,j)
+	      this->sparseMatrix[i] = row - 1;
+	      if (col != currentColumn)
 	      {
-		this->sparseMatrixIndex[vIndex] = i;
-		currentColumn = col;
-		vIndex++;
+		      this->sparseMatrixIndex[vIndex] = i;
+		      currentColumn = col;
+		      vIndex++;
 	      }
-	}
+	    }
     }
     
     if(_integer){
       
       for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val2;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
-	    }
-	}  
+	    {      
+	      fin >> row >> col >> val2;
+	      this->sparseMatrix[i] = row - 1;
+	      if (col != currentColumn)
+	      {
+	        this->sparseMatrixIndex[vIndex] = i;
+	        currentColumn = col;
+	        vIndex++;
+	      }
+	    }  
     }
     
     if(_pattern){
       for(int i = 0; i < this->nonzeroCount; i++)
-	{            
-	    fin >> row >> col;
-	    this->sparseMatrix[i] = row - 1;
-	    if (col != currentColumn)
+	    {            
+	      fin >> row >> col;
+	      this->sparseMatrix[i] = row - 1;
+	      if (col != currentColumn)
 	      {
-		this->sparseMatrixIndex[vIndex] = i;
-		currentColumn = col;
-		vIndex++;
+		      this->sparseMatrixIndex[vIndex] = i;
+		      currentColumn = col;
+		      vIndex++;
 	      }
-	}
+	    }
     }
     
     if(_complex){
       
       for(int i = 0; i < this->nonzeroCount + 1; i++)
-	{      
-	  fin >> row >> col >> val1 >> val2;
-	  this->sparseMatrix[i] = row - 1;
-	  if (col != currentColumn)
-	    {
-	      this->sparseMatrixIndex[vIndex] = i;
-	      currentColumn = col;
-	      vIndex++;
+	    {      
+	      fin >> row >> col >> val1 >> val2;
+	      this->sparseMatrix[i] = row - 1;
+	      if (col != currentColumn)
+	      {
+	        this->sparseMatrixIndex[vIndex] = i;
+	        currentColumn = col;
+	        vIndex++;
+	      }
 	    }
-	}
     }
-  }
-  
+  }  
   
   if(!_general && !_symmetric)
-    {
-      std::cout << "I believe a problem happened during reading fields of the matrix" << std::endl;
-      exit(1);
-    }
+  {
+    std::cout << "I believe a problem happened during reading fields of the matrix" << std::endl;
+    exit(1);
+  }
     
   
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
@@ -318,7 +317,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, d
   //Partition
   if(algorithm == 1)
   {
-    this->LDGp2n(partitionCount, imbal);
+    this->LDGp2n(partitionCount, slackValue, imbal);
   }
   else if(algorithm == 2)
   {
@@ -326,7 +325,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, d
   }
   else if(algorithm == 3)
   {
-    this->LDGBF(partitionCount, imbal);
+    this->LDGBF(partitionCount, slackValue, imbal);
   }
 
   //compute cut and report  
@@ -334,7 +333,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, d
 
 
 //ALGO 1//
-void Partitioner::LDGp2n(int partitionCount, double imbal)
+void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
@@ -355,9 +354,14 @@ void Partitioner::LDGp2n(int partitionCount, double imbal)
   
   int ctr = -1;
   
-  double capacityConstraint = (imbal*this->vertexCount) / partitionCount;
+  double capacityConstraint;
+  int currVertexCount = 0;
   for (int i : readOrder)
   {
+    if((imbal*currVertexCount) >= slackValue)
+      capacityConstraint = (imbal*currVertexCount) / partitionCount;
+    else
+      capacityConstraint = slackValue / partitionCount;
     double maxScore = -1.0;
     int maxIndex = -1;
     for (int j = 0; j < partitionCount; j++)
@@ -391,7 +395,7 @@ void Partitioner::LDGp2n(int partitionCount, double imbal)
 	    if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
          partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
 	  }
-    
+    currVertexCount++;
   }
   
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
@@ -430,8 +434,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
   std::vector<int> tracker(10000, -1);
   double capacityConstraint;
   int currVertexCount = 0;
-  for (int i : readOrder) {
-    currVertexCount++;
+  for (int i : readOrder) {    
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
@@ -477,8 +480,10 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
  
     for (int i = 0; i < partitionCount; i++) {
       indexArray[i] = -1;
-      markerArray[i] = 0;
+      markerArray[i] = false;
     }
+    
+    currVertexCount++;
   }
   
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
@@ -494,7 +499,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
   delete[] markerArray;
 }
 
-void Partitioner::LDGBF(int partitionCount, double imbal)
+void Partitioner::LDGBF(int partitionCount, int slackValue, double imbal)
 {
 	int* sizeArray = new int[partitionCount];
 	for (int i = 0; i < partitionCount; i++)
@@ -508,12 +513,17 @@ void Partitioner::LDGBF(int partitionCount, double imbal)
     readOrder.push_back(i);
   }
   std::random_shuffle(readOrder.begin(), readOrder.end());
-
-	double maxScore = -1.0;
-	int maxIndex = -1;
-  double capacityConstraint = (imbal*this->vertexCount) / partitionCount;
+	
+  double capacityConstraint;
+  int currVertexCount = 0;
 	for (int i : readOrder)
 	{
+    if((imbal*currVertexCount) >= slackValue)
+      capacityConstraint = (imbal*currVertexCount) / partitionCount;
+    else
+      capacityConstraint = slackValue / partitionCount;
+    double maxScore = -1.0;
+	  int maxIndex = -1;
 		for (int j = 0; j < partitionCount; j++)
 		{
 			int connectivity = this->BFConnectivity(j, i);
@@ -539,7 +549,7 @@ void Partitioner::LDGBF(int partitionCount, double imbal)
 			if (!(this->bloomFilter->contains(k, maxIndex)))
 				this->bloomFilter->insert(k, maxIndex);
 		}
-
+    currVertexCount++;
 	}
 	
 	delete[] sizeArray;
