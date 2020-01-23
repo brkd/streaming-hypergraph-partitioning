@@ -168,8 +168,7 @@ void Partitioner::read_graph(std::string fileName){
 	        vIndex++;
 	      }
 	    }  
-    }
-    
+    }    
     
     if(_pattern){
     
@@ -269,8 +268,7 @@ void Partitioner::read_graph(std::string fileName){
   {
     std::cout << "I believe a problem happened during reading fields of the matrix" << std::endl;
     exit(1);
-  }
-    
+  }    
   
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
@@ -324,6 +322,10 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, d
     this->LDGn2p(partitionCount, slackValue, imbal);  
   }
   else if(algorithm == 3)
+  {
+    this->LDGn2p_i(partitionCount, slackValue, imbal);
+  }
+  else if(algorithm == 4)
   {
     this->LDGBF(partitionCount, slackValue, imbal);
   }
@@ -484,6 +486,106 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
     }
     
     currVertexCount++;
+  }
+  
+  std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
+  std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
+  std::cout << "******PART SIZES*******" << std::endl;
+    
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  }
+  
+  delete[] sizeArray;
+  delete[] indexArray;
+  delete[] markerArray;
+}
+
+void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
+{
+  int* sizeArray = new int[partitionCount];
+  int* indexArray = new int[partitionCount];
+  bool* markerArray = new bool[partitionCount];
+  
+  for (int i = 0; i < partitionCount; i++)
+  {
+    sizeArray[i] = 0;
+    indexArray[i] = -1;
+    markerArray[i] = false;
+  }
+  
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+  {
+    readOrder.push_back(i);
+  }
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  
+  std::vector<std::vector<int>*> netToPartition;  
+  std::vector<int> tracker(10000, -1);
+  double capacityConstraint;
+  int currVertexCount = 0;
+  
+  std::default_random_engine generator;
+  std::uniform_int_distribution<int> distribution(0,INITVECSIZE - 1);
+  for(int i : readOrder)
+  {
+    if((imbal*currVertexCount) >= slackValue)
+      capacityConstraint = (imbal*currVertexCount) / partitionCount;
+    else
+      capacityConstraint = slackValue / partitionCount;
+    for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+    {
+      int edge = this->sparseMatrix[k];
+      if(edge >= tracker.size())
+      {
+        int currNetIndex = tracker.size() - 1;
+	
+        for(int j = currNetIndex; j < edge; j++)
+        {
+	        tracker.push_back(-1);
+          if(j == edge - 1)
+          {
+            std::vector<int>* newEdge = new std::vector<int>();
+    	      netToPartition.push_back(newEdge);
+    	      int n2pSize = netToPartition.size();
+    	      netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+    	      tracker[j] = n2pSize - 1;    	      
+          }            
+        }
+      }
+      if (tracker[edge] == -1)
+      {
+	      std::vector<int>* newEdge = new std::vector<int>();
+        netToPartition.push_back(newEdge);
+        int n2pSize = netToPartition.size();
+        netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+        tracker[edge] = n2pSize - 1;
+      }
+    }
+    int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker);
+    partVec[i] = maxIndex;
+    sizeArray[maxIndex] += 1;
+    
+    for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+    {
+      int edge = this->sparseMatrix[k];      
+      if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
+      {
+        if(netToPartition[tracker[edge]]->size() != INITVECSIZE)
+          netToPartition[tracker[edge]]->push_back(maxIndex);
+        else
+        {
+          int newIndex = distribution(generator);
+          netToPartition[tracker[edge]]->at(newIndex) = maxIndex;
+        }
+      }              
+    }
+    
+    for (int i = 0; i < partitionCount; i++) {
+      indexArray[i] = -1;
+      markerArray[i] = false;
+    }
   }
   
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;

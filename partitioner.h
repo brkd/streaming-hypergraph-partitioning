@@ -8,7 +8,7 @@
 #define MAXPARTNO 4096
 #define MAXIMBAL 1.20
 #define MAXSLACKVAL 1000
-#define INITVECSIZE 3
+#define INITVECSIZE 5
 
 class Partitioner
 {
@@ -30,6 +30,7 @@ class Partitioner
 
   void LDGp2n(int, int, double);
   void LDGn2p(int, int, double);
+  void LDGn2p_i(int, int, double);
   void LDGBF(int, int, double);
   void LDGMultiBF();
   

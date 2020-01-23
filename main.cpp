@@ -6,7 +6,7 @@ int main(int argc, char** argv) {
   int partitionCount, randomizationCount;
   int algorithm = atoi(argv[1]);
 
-  if (algorithm != 1 && algorithm != 2 && algorithm != 3) {
+  if (algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4) {
     std::cout << "wrong algorithm" << endl;
     exit(1);
   }
@@ -29,11 +29,9 @@ int main(int argc, char** argv) {
 
   int byteSize;
   int hashCount;
-  Partitioner* partitioner;
+  Partitioner* partitioner;  
   
-  
-  
-  if(algorithm == 3)
+  if(algorithm == 4)
   { 
     if(argc > 8)
     {
