@@ -573,7 +573,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
       if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
       {
         if(netToPartition[tracker[edge]]->size() != INITVECSIZE)
-          netToPartition[tracker[edge]]->push_back(maxIndex);
+          netToPartition[tracker[edge]]->push_back(maxIndex);    
         else
         {
           int newIndex = distribution(generator);
@@ -586,6 +586,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
       indexArray[i] = -1;
       markerArray[i] = false;
     }
+    currVertexCount++;
   }
   
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
