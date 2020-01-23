@@ -363,7 +363,7 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
-      capacityConstraint = slackValue / partitionCount;
+      capacityConstraint = ((double)slackValue) / partitionCount;
     double maxScore = -1.0;
     int maxIndex = -1;
     for (int j = 0; j < partitionCount; j++)
@@ -436,11 +436,12 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
   std::vector<int> tracker(10000, -1);
   double capacityConstraint;
   int currVertexCount = 0;
-  for (int i : readOrder) {    
+  for (int i : readOrder) {
+       
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
-      capacityConstraint = slackValue / partitionCount;
+      capacityConstraint = ((double)slackValue) / partitionCount;
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
       int edge = this->sparseMatrix[k];
@@ -470,7 +471,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
         tracker[edge] = n2pSize - 1;        
       }
     }
-    int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker);
+    int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
@@ -479,7 +480,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
       if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
         netToPartition[tracker[edge]]->push_back(maxIndex);      
     }
- 
+     
     for (int i = 0; i < partitionCount; i++) {
       indexArray[i] = -1;
       markerArray[i] = false;
@@ -533,7 +534,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
-      capacityConstraint = slackValue / partitionCount;
+      capacityConstraint = ((double)slackValue) / partitionCount;
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
       int edge = this->sparseMatrix[k];
@@ -624,7 +625,7 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, double imbal)
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
-      capacityConstraint = slackValue / partitionCount;
+      capacityConstraint = ((double)slackValue) / partitionCount;
     double maxScore = -1.0;
 	  int maxIndex = -1;
 		for (int j = 0; j < partitionCount; j++)
@@ -761,18 +762,19 @@ int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<
   */
 
 int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker)
-{
+{    
   std::vector<int> encounterArray;
 	for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
 	{
 	  int edge = this->sparseMatrix[k];
 	  int edgeIndex = tracker[edge];
+    
 	  for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
 		{
       int part = netToPartition[edgeIndex]->at(i);
       if (markerArray[part])
-      {
-		    encounterArray[indexArray[part]] += 1;
+      {       
+		    encounterArray[indexArray[part]] += 1;        
 		  }		    
 		  else
 		  {
@@ -781,34 +783,37 @@ int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstra
 		    markerArray[part] = true;
       }
 		}
+    
   }
+  
 	double maxScore = -1.0;
 	int maxIndex = -1;
 	for (int i = 0; i < partitionCount; i++)
 	{
-	    int connectivity;
+	    int connectivity;      
 	    if (indexArray[i] == -1)
 	      connectivity = 0;
 	    else
 	      connectivity = encounterArray[indexArray[i]];
-	    
-	    double partOverCapacity = sizeArray[i] / capacityConstraint;
+      
+	    double partOverCapacity = sizeArray[i] / capacityConstraint;     
 	    double penalty = 1 - partOverCapacity;
 	    double score = penalty * connectivity;
       if (score > maxScore)
       {
         maxScore = score;
         maxIndex = i;
-	    }
+	    }      
 	    else if (score == maxScore)
 	    {
+        
 		    if (sizeArray[i] < sizeArray[maxIndex])
 		    {
 		      maxIndex = i;
-		    }
+		    } 	      
 	    }
+
   }
-	
 	return maxIndex;
 }
 
