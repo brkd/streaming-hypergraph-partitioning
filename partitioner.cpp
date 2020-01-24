@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <cmath>
+#include <chrono>
 
 #define DEBUG
 
@@ -315,19 +316,31 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, d
   //Partition
   if(algorithm == 1)
   {
+    auto start = std::chrono::high_resolution_clock::now();
     this->LDGp2n(partitionCount, slackValue, imbal);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << " Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 2)
   {
-    this->LDGn2p(partitionCount, slackValue, imbal);  
+    auto start = std::chrono::high_resolution_clock::now();
+    this->LDGn2p(partitionCount, slackValue, imbal);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << " Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 3)
   {
+    auto start = std::chrono::high_resolution_clock::now();
     this->LDGn2p_i(partitionCount, slackValue, imbal);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << " Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 4)
   {
+    auto start = std::chrono::high_resolution_clock::now();
     this->LDGBF(partitionCount, slackValue, imbal);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
 
   //compute cut and report  

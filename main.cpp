@@ -1,5 +1,4 @@
 #include "partitioner.cpp"
-#include <chrono>
 
 int main(int argc, char** argv) {
   std::string fileName;
@@ -49,10 +48,7 @@ int main(int argc, char** argv) {
   
   for(int i = 0; i < randomizationCount; i++)
   {
-    auto start = std::chrono::high_resolution_clock::now();
-    partitioner->partition(algorithm, partitionCount, slackValue, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Run: "<< i + 1 << " - Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    partitioner->partition(algorithm, partitionCount, slackValue, imbal);   
   }
   
   delete partitioner;
