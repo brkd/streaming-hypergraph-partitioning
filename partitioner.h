@@ -34,7 +34,7 @@ class Partitioner
   void LDGBF(int, int, double);
   void LDGMultiBF();
   
-  //int calculateCuts();
+  int calculateCuts(int);
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
   int BFConnectivity(int, int);

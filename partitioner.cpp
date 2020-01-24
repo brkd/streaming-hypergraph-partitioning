@@ -319,21 +319,21 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, d
     auto start = std::chrono::high_resolution_clock::now();
     this->LDGp2n(partitionCount, slackValue, imbal);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << " Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 2)
   {
     auto start = std::chrono::high_resolution_clock::now();
     this->LDGn2p(partitionCount, slackValue, imbal);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << " Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 3)
   {
     auto start = std::chrono::high_resolution_clock::now();
     this->LDGn2p_i(partitionCount, slackValue, imbal);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << " Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 4)
   {
@@ -342,7 +342,8 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, d
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
-
+  
+  std::cout << "Cuts: " << this->calculateCuts(partitionCount) << std::endl;
   //compute cut and report  
 }
 
@@ -727,20 +728,24 @@ void Partitioner::LDGMultiBF()
 	*/
 }
 
-/*int Partitioner::calculateCuts()
+int Partitioner::calculateCuts(int partitionCount)
 {
 	int cuts = 0;
-	for (std::vector<int> edge : this->netToPartition)
-	{
-		int partCount = 0;
-		for (int i : edge)
-		{
-			partCount++;
-		}		
-		cuts += partCount - 1;
-	}
-	return cuts;
-}*/
+  std::vector<std::vector<int>> netsInParts(partitionCount);
+  for(int i = 0; i < this->vertexCount; i++)
+  {
+    int part = this->partVec[i];
+    for(int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+    {
+      if(std::find(netsInParts[part].begin(), netsInParts[part].end(), this->sparseMatrix[k]) == netsInParts[part].end())
+      {
+        cuts++;
+        netsInParts[part].push_back(this->sparseMatrix[k]);
+      }
+    }
+  }
+  return cuts;
+}
 
 //Private methods
  
@@ -748,9 +753,9 @@ int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<
 {
   int connectivityCount = 0;		
   for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
-    {
+  {
       if(std::find(partitionToNet[partitionID].begin(), partitionToNet[partitionID].end(), this->sparseMatrix[k]) != partitionToNet[partitionID].end())
-	connectivityCount += 1;
+	      connectivityCount += 1;
 	}
   return connectivityCount;
 }
