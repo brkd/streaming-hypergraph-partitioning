@@ -326,21 +326,21 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, d
     auto start = std::chrono::high_resolution_clock::now();
     this->LDGn2p(partitionCount, slackValue, imbal);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 3)
   {
     auto start = std::chrono::high_resolution_clock::now();
     this->LDGn2p_i(partitionCount, slackValue, imbal);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 4)
   {
     auto start = std::chrono::high_resolution_clock::now();
     this->LDGBF(partitionCount, slackValue, imbal);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   
   std::cout << "Cuts: " << this->calculateCuts(partitionCount) << std::endl;
@@ -419,7 +419,7 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
   std::cout << "******PART SIZES*******" << std::endl;
   
   for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
 
   delete[] sizeArray;
@@ -508,7 +508,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
   std::cout << "******PART SIZES*******" << std::endl;
     
   for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
   
   delete[] sizeArray;
@@ -609,7 +609,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
   std::cout << "******PART SIZES*******" << std::endl;
     
   for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
   
   delete[] sizeArray;
