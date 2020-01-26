@@ -11,9 +11,14 @@
 #include <stdio.h>
 
 //#define DEBUG
+<<<<<<< HEAD
 //#define WATCH
 #define etype int
 #define vtype int
+=======
+#define WATCH
+
+>>>>>>> d2bb39898c90939eaad2db5c68390369f9cf06ec
 
 
 /*
@@ -51,10 +56,23 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 //Public methods
 Partitioner::Partitioner(std::string fileName){
   //Read matrix
-  std::ifstream fin(fileName);
-  std::string comment;
-  std::getline(fin, comment);
   
+  std::string mtx_name = fileName + ".mtx";
+  std::string bin_name = fileName + ".bin";
+  const char* bfile = bin_name.c_str();
+  
+
+  std::cout << "C1" << std::endl;
+  
+  FILE* bp;
+  bp = fopen(bfile, "rb");
+  
+  //if(bp == NULL){
+  if(1){
+    std::ifstream fin(mtx_name);
+    std::string comment;
+    std::getline(fin, comment);
+    
   
   while(fin.peek() == '%')
   {    
@@ -79,9 +97,20 @@ Partitioner::Partitioner(std::string fileName){
     this->sparseMatrix = new int[this->nonzeroCount*2 + 1];
   
   fin.close();
+<<<<<<< HEAD
   
   //this->read_binary_graph(fileName);
   this->read_graph(fileName);
+=======
+ 
+  this->read_graph(mtx_name);
+  }
+  else{
+    std::cout << "Not available at the moment" << std::endl;
+    exit(1);
+    //this->read_binary_graph(bin_name);
+  }
+>>>>>>> d2bb39898c90939eaad2db5c68390369f9cf06ec
   
 }
 
@@ -91,38 +120,57 @@ void Partitioner::read_binary_graph(std::string fileName){
   FILE* bp;
   bp = fopen(fname, "r");
 
-  int* nnz = new int;
-  int* nets;
-  int* vertices;
+  int* nov = new int;
+  fread(nov, sizeof(int), 1, bp);
+  this->vertexCount = *nov;
+  //std::cout << "nnz: " << *nnz <<std::endl;
 
-  fread(nnz, sizeof(int), 1, bp);
-  std::cout << "nnz: " << *nnz <<std::endl;
-
-  nets = new int[*nnz+1];
-  vertices = new int[*nnz+1];
-
-  fread(nets, sizeof(int), *nnz, bp);
-  fread(vertices, sizeof(int), *nnz, bp);
+  this->sparseMatrixIndex = new int[*nov+1];
+  fread(this->sparseMatrixIndex, sizeof(int), *nov+1, bp);
+ 
+  this->sparseMatrix = new int[this->sparseMatrixIndex[*nov]];
+  fread(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[*nov], bp);
   
-  for(int i = 0; i < 150; i++){
-    std::cout << "nets[]: " << nets[i] << " " <<vertices[i] << std::endl;
   
+  this->partVec = new int[this->vertexCount];
+  this->bloomFilter = nullptr;
+  
+#ifdef DEBUG
+  std::cout << "First indexes of xadj and adj" << std::endl;
+    for(int i = 0; i < 150; i++){
+    std::cout << "i:" << this->sparseMatrixIndex[i] << " " << sparseMatrix[i] << std::endl;
   }
+#endif
   
+    fclose(bp);
+    //exit(1);
+}
+
+void Partitioner::write_binary_graph(std::string fileName){
+  fileName += ".bin";
+  const char* fname = fileName.c_str();
+  FILE* bp;
+  bp = fopen(fname, "w");
+  
+  fwrite(&this->vertexCount, sizeof(int), 1, bp);
+  fwrite(this->sparseMatrixIndex, sizeof(int), this->vertexCount+1, bp);
+  fwrite(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[this->vertexCount], bp);
+  fclose(bp);
+}
+
+void Partitioner::check_and_write_binary_graph(std::string fileName){
   /*
-  vertices = (int*)malloc(sizeof(int) * (*nnz + 1));
-  fread(*vertices, sizeof(int), (size_t)(*nnz + 1), bp);
-  (*nets) = (int*)malloc(sizeof(int) * nnz);
-  fread(*nets, sizeof(int), (size_t)(*nnz + 1), bp);
+  std::cout << "Summoned" << std::endl;
+  //fileName += ".bin";
+  const char* bfile = fileName.c_str();
+  FILE* bp;
+  bp = fopen(bfile, "rb");
+  if(bp == NULL){
+    bp = fopen(bfile, "wb");
+    std::cout << "Writing Binary Graph" << std::endl;
+    this->write_binary_graph(fileName);
   */
-
-  //(*pewghts) = (ewtype*)malloc(sizeof(ewtype) * (*pxadj)[*pnov]);
-  //fread(*pewghts, sizeof(ewtype), (size_t)(*pxadj)[*pnov], bp);
-  //(*pvwghts) = (vwtype*)malloc(sizeof(vwtype) * (*pnov));
-  //fread(*pvwghts, sizeof(vwtype), *pnov, bp);
-
-    
-  exit(1);
+  }
 }
 
 
@@ -380,7 +428,7 @@ void Partitioner::read_graph(std::string fileName){
 
   if(!_general && !_symmetric)
   {
-    std::cout << "I believe a problem happened during reading fields of the matrix" << std::endl;
+    std::cout << "I believe a problem happened during reading fields of the matrix.." << std::endl;
     exit(1);
   }    
 
@@ -589,6 +637,12 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   }
   
   std::vector<int> readOrder;
+  
+  for(int i = 0; i < sparseMatrixIndex[this->vertexCount]; i++){
+    //std::cout << "i: " << i <<" sparseMatrixIndex[vertexCount]: " << sparseMatrixIndex[this->vertexCount] << " vertexCount: " << this->vertexCount  << " ";
+    //std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
+  }
+
   for (int i = 0; i < this->vertexCount; i++)
   {
     readOrder.push_back(i);
@@ -600,16 +654,22 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   std::vector<int> tracker(10000, -1);
   double capacityConstraint;
   int currVertexCount = 0;
+
   for (int i : readOrder) {
-       
+    //std::cout << "i: " << i <<std::endl;
+    //std::cout << sparseMatrixIndex[this->vertexCount] << std::endl;
+    
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
       capacityConstraint = ((double)slackValue) / partitionCount;
+
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-    {
-      int edge = this->sparseMatrix[k];
-      if(edge >= tracker.size())
+      {
+	//std::cout << "index[vertexCount]: " << this->sparseMatrixIndex[this->vertexCount]<< " k: " << k << std::endl;
+	int edge = this->sparseMatrix[k];
+	//std::cout << "edge: " << edge << std::endl;
+	if(edge >= tracker.size())
       {
         int currNetIndex = tracker.size() - 1;
 	
@@ -628,16 +688,18 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
       }
       if (tracker[edge] == -1)
       {
-	      std::vector<int>* newEdge = new std::vector<int>();
+	std::vector<int>* newEdge = new std::vector<int>();
         netToPartition.push_back(newEdge);
         int n2pSize = netToPartition.size();
         netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
         tracker[edge] = n2pSize - 1;        
       }
     }
+
     int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
+    
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
       int edge = this->sparseMatrix[k];      
@@ -653,7 +715,11 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     currVertexCount++;
 #ifdef WATCH
     std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
-    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+    if(((double)currVertexCount/this->vertexCount)*100 < double(100)){
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+    }else{
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << "???" << "%" << std::flush;;
+    }
 #endif
   }
   
