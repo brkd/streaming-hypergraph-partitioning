@@ -6,8 +6,10 @@
 #include <stdlib.h>
 #include <cmath>
 #include <chrono>
+#include <iomanip>
 
-#define DEBUG
+//#define DEBUG
+#define WATCH
 
 
 /*
@@ -201,75 +203,168 @@ void Partitioner::read_graph(std::string fileName){
 	    }
     }
   }
-  
+
   if(_symmetric){
+    //row->vertex
+    //col->net
     
+    std::pair<int,int>* intermediate = new std::pair<int,int>[this->nonzeroCount*2+1]; //also delete that
+  
     if(_real){
-     
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	    {      
-	      fin >> row >> col >> val1;
-	      //ALSO NEED TO ADD (j,i) as well as (i,j)
-	      this->sparseMatrix[i] = row - 1;
-	      if (col != currentColumn)
-	      {
-		      this->sparseMatrixIndex[vIndex] = i;
-		      currentColumn = col;
-		      vIndex++;
-	      }
-	    }
+      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
+      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
+	fin >> row >> col >> val1;
+	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
+	intermediate[i] = std::pair<int, int>(col-1, row-1);
+      }
+      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
     }
     
     if(_integer){
-      
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	    {      
-	      fin >> row >> col >> val2;
-	      this->sparseMatrix[i] = row - 1;
-	      if (col != currentColumn)
-	      {
-	        this->sparseMatrixIndex[vIndex] = i;
-	        currentColumn = col;
-	        vIndex++;
-	      }
-	    }  
+      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
+      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
+	fin >> row >> col >> val3;
+	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
+	intermediate[i] = std::pair<int, int>(col-1, row-1);
+      }
+      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
     }
     
     if(_pattern){
-      for(int i = 0; i < this->nonzeroCount; i++)
-	    {            
-	      fin >> row >> col;
-	      this->sparseMatrix[i] = row - 1;
-	      if (col != currentColumn)
-	      {
-		      this->sparseMatrixIndex[vIndex] = i;
-		      currentColumn = col;
-		      vIndex++;
-	      }
-	    }
+      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
+      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
+	fin >> row >> col;
+	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
+	intermediate[i] = std::pair<int, int>(col-1, row-1);
+      }
+      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
     }
     
     if(_complex){
-      
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	    {      
-	      fin >> row >> col >> val1 >> val2;
-	      this->sparseMatrix[i] = row - 1;
-	      if (col != currentColumn)
-	      {
-	        this->sparseMatrixIndex[vIndex] = i;
-	        currentColumn = col;
-	        vIndex++;
-	      }
-	    }
+      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
+      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
+	fin >> row >> col >> val1 >> val2;
+	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
+	intermediate[i] = std::pair<int, int>(col-1, row-1);
+      }
+      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
     }
-  }  
+    
+    std::sort(intermediate, intermediate+this->nonzeroCount*2);
+
+#ifdef DEBUG
+    std::cout << "Printing Sorted Symmetry, with replications included: " << std::endl;
+    for(int i = 0; i < 150; i++){
+      std::cout << i << ": " << intermediate[i].first << " " << intermediate[i].second << "\n";
+    }
+#endif
+    
+    int current_col = 0;
+    int net;
+    int vertex;
+    int lose_offset = 0; //This keeps track of number of replications and reduce it to strictly place values in sparseMatrix
+    sparseMatrixIndex[0] = 0;
+    
+    
+    for(int i = 0; i < this->nonzeroCount*2 + 1; i++){
+      net = intermediate[i].first;
+      vertex = intermediate[i].second;
+      
+#ifdef DEBUG
+      if(i < 150)
+	std::cout << "i :" << i << " net: " << net << " vertex: " << vertex << std::endl;
+#endif      
+
+      for(int curr = i+1; curr < this->nonzeroCount*2 +1; curr++){
+	
+	if(net != current_col){
+	  vIndex++;
+	  sparseMatrixIndex[vIndex] = i-lose_offset;
+#ifdef DEBUG
+	  if(i < 150)
+	    std::cout << "Col changed at i: " << i << std::endl;
+#endif
+	  current_col = net;
+	}
+	
+	if(net != intermediate[curr].first){
+	  this->sparseMatrix[i-lose_offset] = vertex;
+#ifdef DEBUG
+	  if(i < 150)
+	    std::cout << "Added, i: " << i << " lose offset: " << lose_offset << " net: " << vIndex << " vertex: " << vertex <<std::endl;
+#endif
+	  break;	 
+	}
+	
+	if((net == intermediate[curr].first) && (vertex == intermediate[curr].second)){
+	  //std::cout << "Replication!" << std::endl;
+	  lose_offset++;
+	  break;
+	}
+	
+      }
+      
+    }
+    delete[] intermediate;
+
+    int* strict = new int[sparseMatrixIndex[this->vertexCount-1]+1];
+    int* holder = this->sparseMatrix;
+    
+    for(int i = 0; i < sparseMatrixIndex[this->vertexCount-1]; i++){
+      
+      strict[i] = sparseMatrix[i];
+    }
+
+    strict[this->vertexCount] = 0;
+
+    delete[] this->sparseMatrix;
+    this->sparseMatrix = strict;
   
+#ifdef DEBUG      
+    for(int in = sparseMatrixIndex[this->vertexCount-1]-1000; in < sparseMatrixIndex[this->vertexCount-1]+1; in++){
+      if(in == this->nonzeroCount*2+1 - lose_offset){
+	std::cout << "Printing last columns of CRS" << std::endl;
+	std::cout << "Last pointers: " << sparseMatrixIndex[this->vertexCount-1] << " " << sparseMatrixIndex[this->vertexCount] << " " << sparseMatrixIndex[this->vertexCount+1] << std::endl;
+      }
+      std::cout << "Index: " << in << " val: " << this->sparseMatrix[in] << std::endl;
+    }
+#endif
+  }
+  
+
   if(!_general && !_symmetric)
   {
     std::cout << "I believe a problem happened during reading fields of the matrix" << std::endl;
     exit(1);
   }    
+
+
+  #ifdef DEBUG
+  int debug_size = 300;
+  std::cout << "Sparse Matrix Index: " << std::endl;
+  
+  for(int i = 0; i < debug_size/5; i++){
+    std::cout << sparseMatrixIndex[i] << " ";
+  }
+  
+  std::cout << "\n" << "\n";
+  
+  int curr, next;
+
+  for(int i = 0; i < 25; i++){
+    curr = sparseMatrixIndex[i];
+    next = sparseMatrixIndex[i+1];
+
+    std::cout << "Net " << i << " start: " << curr << " end: " << next <<std::endl;
+    
+    for(int j = curr; j < next; j++){
+      std::cout << sparseMatrix[j] << " ";
+    }
+    
+    std::cout << "\n" << std::endl;
+
+  }
+#endif
   
   this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
   this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
@@ -412,8 +507,15 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
          partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
 	  }
     currVertexCount++;
+    
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+    
   }
   
+  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
@@ -501,8 +603,13 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
     }
     
     currVertexCount++;
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
   }
   
+  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
@@ -571,7 +678,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
       }
       if (tracker[edge] == -1)
       {
-	      std::vector<int>* newEdge = new std::vector<int>();
+	std::vector<int>* newEdge = new std::vector<int>();
         netToPartition.push_back(newEdge);
         int n2pSize = netToPartition.size();
         netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
@@ -602,8 +709,15 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
       markerArray[i] = false;
     }
     currVertexCount++;
+    
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+    
   }
   
+  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
@@ -668,6 +782,12 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, double imbal)
 				this->bloomFilter->insert(k, maxIndex);
 		}
     currVertexCount++;
+
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+
 	}
 	
 	delete[] sizeArray;
