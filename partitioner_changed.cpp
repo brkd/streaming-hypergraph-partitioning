@@ -5,13 +5,9 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <cmath>
-#include <chrono>
-//
-#include <iomanip>
-#include <stdio.h>
 
-//#define DEBUG
-#define WATCH
+#define DEBUG
+
 
 /*
 int readBinaryGraph(FILE* bp, etype **pxadj, vtype **padj,
@@ -38,7 +34,6 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
   fwrite(vwghts, sizeof(vwtype), (size_t)(nov), bp);
   return 1;
 }
-/*
   sprintf(bfile, "%s_bin/%s.bin", currFolder, gfile + dirindex + 1);
   printf("Binary file name: %s\n", bfile);
   bp = fopen(bfile, "rb");
@@ -48,23 +43,10 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 //Public methods
 Partitioner::Partitioner(std::string fileName){
   //Read matrix
+  std::ifstream fin(fileName);
+  std::string comment;
+  std::getline(fin, comment);
   
-  std::string mtx_name = fileName + ".mtx";
-  std::string bin_name = fileName + ".bin";
-  const char* bfile = bin_name.c_str();
-  
-
-  std::cout << "C1" << std::endl;
-  
-  FILE* bp;
-  bp = fopen(bfile, "rb");
-  
-  //if(bp == NULL){
-  if(1){
-    std::ifstream fin(mtx_name);
-    std::string comment;
-    std::getline(fin, comment);
-    
   
   while(fin.peek() == '%')
   {    
@@ -77,7 +59,7 @@ Partitioner::Partitioner(std::string fileName){
   std::cout << "Row count: " << this->edgeCount << " Column count: " << this->vertexCount << " Non-zero count: " << this->nonzeroCount << std::endl;
   
   //Init partition matrix
-  this->partVec = new int[this->vertexCount];
+  this->partVec = new int[this->vertexCount];  
   this->bloomFilter = nullptr;
   
   //Init sparse matrix representation
@@ -89,74 +71,11 @@ Partitioner::Partitioner(std::string fileName){
     this->sparseMatrix = new int[this->nonzeroCount*2 + 1];
   
   fin.close();
-  this->read_graph(mtx_name);
-  }
-  else{
-    std::cout << "Not available at the moment" << std::endl;
-    exit(1);
-    //this->read_binary_graph(bin_name);
-  }
+  
+  this->read_graph(fileName);
+  
 }
-
-void Partitioner::read_binary_graph(std::string fileName){
   
-  const char* fname = fileName.c_str();
-  FILE* bp;
-  bp = fopen(fname, "r");
-
-  int* nov = new int;
-  fread(nov, sizeof(int), 1, bp);
-  this->vertexCount = *nov;
-  //std::cout << "nnz: " << *nnz <<std::endl;
-
-  this->sparseMatrixIndex = new int[*nov+1];
-  fread(this->sparseMatrixIndex, sizeof(int), *nov+1, bp);
- 
-  this->sparseMatrix = new int[this->sparseMatrixIndex[*nov]];
-  fread(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[*nov], bp);
-  
-  
-  this->partVec = new int[this->vertexCount];
-  this->bloomFilter = nullptr;
-  
-#ifdef DEBUG
-  std::cout << "First indexes of xadj and adj" << std::endl;
-    for(int i = 0; i < 150; i++){
-    std::cout << "i:" << this->sparseMatrixIndex[i] << " " << sparseMatrix[i] << std::endl;
-  }
-#endif
-  
-    fclose(bp);
-    //exit(1);
-}
-
-void Partitioner::write_binary_graph(std::string fileName){
-  fileName += ".bin";
-  const char* fname = fileName.c_str();
-  FILE* bp;
-  bp = fopen(fname, "w");
-  
-  fwrite(&this->vertexCount, sizeof(int), 1, bp);
-  fwrite(this->sparseMatrixIndex, sizeof(int), this->vertexCount+1, bp);
-  fwrite(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[this->vertexCount], bp);
-  fclose(bp);
-}
-
-void Partitioner::check_and_write_binary_graph(std::string fileName){
-  /*
-  std::cout << "Summoned" << std::endl;
-  //fileName += ".bin";
-  const char* bfile = fileName.c_str();
-  FILE* bp;
-  bp = fopen(bfile, "rb");
-  if(bp == NULL){
-    bp = fopen(bfile, "wb");
-    std::cout << "Writing Binary Graph" << std::endl;
-    this->write_binary_graph(fileName);
-   }
-  */
-}
-
 
 void Partitioner::read_graph(std::string fileName){
     
@@ -281,55 +200,27 @@ void Partitioner::read_graph(std::string fileName){
 	    }
     }
   }
-
+  
   if(_symmetric){
+
+    //ALSO NEED TO ADD (j,i) as well as (i,j)
+    //Need a sorted pair array to do this
     //row->vertex
     //col->net
     
     std::pair<int,int>* intermediate = new std::pair<int,int>[this->nonzeroCount*2+1]; //also delete that
-  
-    if(_real){
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
-	fin >> row >> col >> val1;
-	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
-	intermediate[i] = std::pair<int, int>(col-1, row-1);
-      }
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-    }
     
-    if(_integer){
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
-	fin >> row >> col >> val3;
-	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
-	intermediate[i] = std::pair<int, int>(col-1, row-1);
-      }
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
+    //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
+    for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
+      fin >> row >> col >> val1;
+      intermediate[i+1] = std::pair<int, int>(row-1, col-1);
+      intermediate[i] = std::pair<int, int>(col-1, row-1);
     }
+    //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
     
-    if(_pattern){
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
-	fin >> row >> col;
-	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
-	intermediate[i] = std::pair<int, int>(col-1, row-1);
-      }
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-    }
-    
-    if(_complex){
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
-	fin >> row >> col >> val1 >> val2;
-	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
-	intermediate[i] = std::pair<int, int>(col-1, row-1);
-      }
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-    }
     
     std::sort(intermediate, intermediate+this->nonzeroCount*2);
-
+    
 #ifdef DEBUG
     std::cout << "Printing Sorted Symmetry, with replications included: " << std::endl;
     for(int i = 0; i < 150; i++){
@@ -337,87 +228,102 @@ void Partitioner::read_graph(std::string fileName){
     }
 #endif
     
-    int current_col = 0;
-    int net;
-    int vertex;
-    int lose_offset = 0; //This keeps track of number of replications and reduce it to strictly place values in sparseMatrix
-    sparseMatrixIndex[0] = 0;
-    
-    
-    for(int i = 0; i < this->nonzeroCount*2 + 1; i++){
-      net = intermediate[i].first;
-      vertex = intermediate[i].second;
+    if(_real){
+      int current_col = 0;
+      int net;
+      int vertex;
+      int lose_offset = 0; //This keeps track of number of replications and reduce it to strictly place values in sparseMatrix
+      sparseMatrixIndex[0] = 0;
       
-#ifdef DEBUG
-      if(i < 150)
-	std::cout << "i :" << i << " net: " << net << " vertex: " << vertex << std::endl;
-#endif      
-
-      for(int curr = i+1; curr < this->nonzeroCount*2 +1; curr++){
+      
+      for(int i = 0; i < this->nonzeroCount*2 + 1; i++){
+	net = intermediate[i].first;
+	vertex = intermediate[i].second;
 	
-	if(net != current_col){
-	  vIndex++;
-	  sparseMatrixIndex[vIndex] = i-lose_offset;
-#ifdef DEBUG
-	  if(i < 150)
-	    std::cout << "Col changed at i: " << i << std::endl;
-#endif
-	  current_col = net;
-	}
+	if(i < 150)
+	  std::cout << "i :" << i << " net: " << net << " vertex: " << vertex << std::endl;
 	
-	if(net != intermediate[curr].first){
-	  this->sparseMatrix[i-lose_offset] = vertex;
-#ifdef DEBUG
-	  if(i < 150)
-	    std::cout << "Added, i: " << i << " lose offset: " << lose_offset << " net: " << vIndex << " vertex: " << vertex <<std::endl;
-#endif
-	  break;	 
-	}
-	
-	if((net == intermediate[curr].first) && (vertex == intermediate[curr].second)){
-	  //std::cout << "Replication!" << std::endl;
-	  lose_offset++;
-	  break;
+	for(int curr = i+1; curr < this->nonzeroCount*2 +1; curr++){
+	  //std::cout << "net: " << net << " next: " << intermediate[curr].first << " i: " << i << " curr: " << curr << std::endl;
+	  
+	  if(net != current_col){
+	    vIndex++;
+	    sparseMatrixIndex[vIndex] = i-lose_offset;
+	    if(i < 150)
+	      std::cout << "Col changed at i: " << i << std::endl;
+	    current_col = net;
+	  }
+	  
+	  if(net != intermediate[curr].first){
+	    this->sparseMatrix[i-lose_offset] = vertex;
+	    if(i < 150)
+	      std::cout << "Added, i: " << i << " lose offset: " << lose_offset << " net: " << vIndex << " vertex: " << vertex <<std::endl;
+	    break;	 
+	  }
+	  
+	  if((net == intermediate[curr].first) && (vertex == intermediate[curr].second)){
+	    //std::cout << "Replication!" << std::endl;
+	    lose_offset++;
+	    break;
+	  }
+	  
 	}
 	
       }
-      
     }
-    delete[] intermediate;
-
-    int* strict = new int[sparseMatrixIndex[this->vertexCount-1]+1];
-    int* holder = this->sparseMatrix;
     
-    for(int i = 0; i < sparseMatrixIndex[this->vertexCount-1]; i++){
+    if(_integer){
       
-      strict[i] = sparseMatrix[i];
+      for(int i = 0; i < this->nonzeroCount + 1; i++)
+	{      
+	  fin >> row >> col >> val2;
+	  this->sparseMatrix[i] = row - 1;
+	  if (col != currentColumn)
+	    {
+	      this->sparseMatrixIndex[vIndex] = i;
+	      currentColumn = col;
+	      vIndex++;
+	    }
+	}  
     }
-
-    strict[this->vertexCount] = 0;
-
-    delete[] this->sparseMatrix;
-    this->sparseMatrix = strict;
-  
-#ifdef DEBUG      
-    for(int in = sparseMatrixIndex[this->vertexCount-1]-1000; in < sparseMatrixIndex[this->vertexCount-1]+1; in++){
-      if(in == this->nonzeroCount*2+1 - lose_offset){
-	std::cout << "Printing last columns of CRS" << std::endl;
-	std::cout << "Last pointers: " << sparseMatrixIndex[this->vertexCount-1] << " " << sparseMatrixIndex[this->vertexCount] << " " << sparseMatrixIndex[this->vertexCount+1] << std::endl;
-      }
-      std::cout << "Index: " << in << " val: " << this->sparseMatrix[in] << std::endl;
+    
+    if(_pattern){
+      for(int i = 0; i < this->nonzeroCount; i++)
+	{            
+	  fin >> row >> col;
+	  this->sparseMatrix[i] = row - 1;
+	  if (col != currentColumn)
+	    {
+	      this->sparseMatrixIndex[vIndex] = i;
+	      currentColumn = col;
+	      vIndex++;
+	    }
+	}
     }
-#endif
-  }
+    
+    if(_complex){
+      
+      for(int i = 0; i < this->nonzeroCount + 1; i++)
+	{      
+	  fin >> row >> col >> val1 >> val2;
+	  this->sparseMatrix[i] = row - 1;
+	  if (col != currentColumn)
+	    {
+	      this->sparseMatrixIndex[vIndex] = i;
+	      currentColumn = col;
+	      vIndex++;
+	    }
+	}
+    }
+  }  
   
-
   if(!_general && !_symmetric)
-  {
-    std::cout << "I believe a problem happened during reading fields of the matrix.." << std::endl;
-    exit(1);
-  }    
-
-
-  #ifdef DEBUG
+    {
+      std::cout << "I believe a problem happened during reading fields of the matrix" << std::endl;
+      exit(1);
+    }    
+  
+#ifdef DEBUG
   int debug_size = 300;
   std::cout << "Sparse Matrix Index: " << std::endl;
   
@@ -450,33 +356,29 @@ void Partitioner::read_graph(std::string fileName){
 }
 
 
-/*
 Partitioner::Partitioner(std::string fileName, int byteSize, int hashCount)
 {
   //Read matrix
-  
-        std::ifstream fin(fileName);
+	std::ifstream fin(fileName);
 	while (fin.peek() == '%') fin.ignore(2048, '\n');
 	fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
 	std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
 
 	//Init partition matrix
 	this->partVec = new int[this->vertexCount];
-  
-  //Init bloom filter
-  this->bloomFilter = new Bloom<int, int>(byteSize, hashCount);
-	
+
+	//Init bloom filter
+	this->bloomFilter = new Bloom<int, int>(byteSize, hashCount);
+
 	//Init sparse matrix representation
 	this->sparseMatrix = new int[this->nonzeroCount + 1];
 	this->sparseMatrixIndex = new int[this->vertexCount + 1];
 	sparseMatrix[0] = 0;
 	
 	fin.close();
-	
-	//this->read_graph(fileName);
-	
+	this->read_graph(fileName);
+
 }
-*/
 
 Partitioner::~Partitioner()
 {
@@ -488,45 +390,32 @@ Partitioner::~Partitioner()
     delete this->bloomFilter;
 }
 
-void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::partition(int algorithm, int partitionCount, int slackValue, double imbal)
 { 
   //Partition
   if(algorithm == 1)
   {
-    auto start = std::chrono::high_resolution_clock::now();
-    this->LDGp2n(partitionCount, slackValue, seed, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    this->LDGp2n(partitionCount, slackValue, imbal);
   }
   else if(algorithm == 2)
   {
-    auto start = std::chrono::high_resolution_clock::now();
-    this->LDGn2p(partitionCount, slackValue, seed, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    this->LDGn2p(partitionCount, slackValue, imbal);  
   }
   else if(algorithm == 3)
   {
-    auto start = std::chrono::high_resolution_clock::now();
-    this->LDGn2p_i(partitionCount, slackValue, seed, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    this->LDGn2p_i(partitionCount, slackValue, imbal);
   }
   else if(algorithm == 4)
   {
-    auto start = std::chrono::high_resolution_clock::now();
-    this->LDGBF(partitionCount, slackValue, seed, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    this->LDGBF(partitionCount, slackValue, imbal);
   }
-  
-  std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
+
   //compute cut and report  
 }
 
 
 //ALGO 1//
-void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
@@ -541,7 +430,6 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
   {
     readOrder.push_back(i);
   }
-  std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>> partitionToNet(partitionCount);  
@@ -590,28 +478,21 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
          partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
 	  }
     currVertexCount++;
-    
-#ifdef WATCH
-    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
-    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
-#endif
-    
   }
   
-  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
   for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
   }
 
   delete[] sizeArray;
 }
 
 //ALGO 2//
-void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   int* indexArray = new int[partitionCount];
@@ -625,39 +506,26 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   }
   
   std::vector<int> readOrder;
-  
-  for(int i = 0; i < sparseMatrixIndex[this->vertexCount]; i++){
-    //std::cout << "i: " << i <<" sparseMatrixIndex[vertexCount]: " << sparseMatrixIndex[this->vertexCount] << " vertexCount: " << this->vertexCount  << " ";
-    //std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
-  }
-
   for (int i = 0; i < this->vertexCount; i++)
   {
     readOrder.push_back(i);
   }
-  std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>*> netToPartition;  
   std::vector<int> tracker(10000, -1);
   double capacityConstraint;
   int currVertexCount = 0;
-
   for (int i : readOrder) {
-    //std::cout << "i: " << i <<std::endl;
-    //std::cout << sparseMatrixIndex[this->vertexCount] << std::endl;
-    
+       
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
       capacityConstraint = ((double)slackValue) / partitionCount;
-
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-      {
-	//std::cout << "index[vertexCount]: " << this->sparseMatrixIndex[this->vertexCount]<< " k: " << k << std::endl;
-	int edge = this->sparseMatrix[k];
-	//std::cout << "edge: " << edge << std::endl;
-	if(edge >= tracker.size())
+    {
+      int edge = this->sparseMatrix[k];
+      if(edge >= tracker.size())
       {
         int currNetIndex = tracker.size() - 1;
 	
@@ -676,18 +544,16 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
       }
       if (tracker[edge] == -1)
       {
-	std::vector<int>* newEdge = new std::vector<int>();
+	      std::vector<int>* newEdge = new std::vector<int>();
         netToPartition.push_back(newEdge);
         int n2pSize = netToPartition.size();
         netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
         tracker[edge] = n2pSize - 1;        
       }
     }
-
     int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
-    
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
       int edge = this->sparseMatrix[k];      
@@ -701,23 +567,14 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     }
     
     currVertexCount++;
-#ifdef WATCH
-    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
-    if(((double)currVertexCount/this->vertexCount)*100 < double(100)){
-      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
-    }else{
-      std::cout << std::fixed << std::setprecision(2) << "Progress: " << "???" << "%" << std::flush;;
-    }
-#endif
   }
   
-  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
     
   for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
   }
   
   delete[] sizeArray;
@@ -725,7 +582,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   delete[] markerArray;
 }
 
-void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   int* indexArray = new int[partitionCount];
@@ -743,7 +600,6 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   {
     readOrder.push_back(i);
   }
-  std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>*> netToPartition;  
@@ -781,7 +637,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
       }
       if (tracker[edge] == -1)
       {
-	std::vector<int>* newEdge = new std::vector<int>();
+	      std::vector<int>* newEdge = new std::vector<int>();
         netToPartition.push_back(newEdge);
         int n2pSize = netToPartition.size();
         netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
@@ -812,21 +668,14 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
       markerArray[i] = false;
     }
     currVertexCount++;
-    
-#ifdef WATCH
-    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
-    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
-#endif
-    
   }
   
-  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
     
   for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
   }
   
   delete[] sizeArray;
@@ -834,81 +683,60 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   delete[] markerArray;
 }
 
-void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::LDGBF(int partitionCount, int slackValue, double imbal)
 {
-  int* sizeArray = new int[partitionCount];
-  for (int i = 0; i < partitionCount; i++)
-    {
-      sizeArray[i] = 0;
-    }
-  
+	int* sizeArray = new int[partitionCount];
+	for (int i = 0; i < partitionCount; i++)
+	{
+		sizeArray[i] = 0;
+	}
+ 
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
   {
     readOrder.push_back(i);
   }
-  std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
-  
+	
   double capacityConstraint;
   int currVertexCount = 0;
-  for (int i : readOrder)
-    {
-      if((imbal*currVertexCount) >= slackValue)
-	capacityConstraint = (imbal*currVertexCount) / partitionCount;
-      else
-	capacityConstraint = ((double)slackValue) / partitionCount;
-      
-      double maxScore = -1.0;
-      int maxIndex = -1;
-      
-      for (int j = 0; j < partitionCount; j++)
+	for (int i : readOrder)
 	{
-	  int connectivity = this->BFConnectivity(j, i);
-	  double partToCapacity = sizeArray[j] / capacityConstraint;
-	  double penalty = 1 - partToCapacity;
-	  double score = penalty * connectivity;
-	  if (score > maxScore)
-	    {
-	      maxScore = score;
-	      maxIndex = j;
-	    }
-	  else if (score == maxScore)
-	    {
-	      if (sizeArray[j] < sizeArray[maxIndex])
+    if((imbal*currVertexCount) >= slackValue)
+      capacityConstraint = (imbal*currVertexCount) / partitionCount;
+    else
+      capacityConstraint = ((double)slackValue) / partitionCount;
+    double maxScore = -1.0;
+	  int maxIndex = -1;
+		for (int j = 0; j < partitionCount; j++)
 		{
-		  maxIndex = j;
+			int connectivity = this->BFConnectivity(j, i);
+			double partToCapacity = sizeArray[j] / capacityConstraint;
+			double penalty = 1 - partToCapacity;
+			double score = penalty * connectivity;
+			if (score > maxScore)
+			{
+				maxScore = score;
+				maxIndex = j;
+			}
+			else if (score == maxScore)
+			{
+				if (sizeArray[j] < sizeArray[maxIndex])
+				{
+					maxIndex = j;
+				}
+			}
 		}
-	    }
+		for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+		{
+			int edge = this->sparseMatrix[k];
+			if (!(this->bloomFilter->contains(k, maxIndex)))
+				this->bloomFilter->insert(k, maxIndex);
+		}
+    currVertexCount++;
 	}
-      sizeArray[maxIndex] += 1;
-      for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-	{
-	  int edge = this->sparseMatrix[k];
-	  if (!(this->bloomFilter->contains(edge, maxIndex)))
-	    this->bloomFilter->insert(edge, maxIndex);
-	}
-      
-      currVertexCount++;
-      
-#ifdef WATCH
-      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
-      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
-#endif
-
-      
-      
-    }
-
-  std::cout << std::endl;
-  
-  std::cout << "******PART SIZES*******" << std::endl;
-  
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
-  }
-  
-  delete[] sizeArray;
+	
+	delete[] sizeArray;
 }
 
 void Partitioner::LDGMultiBF()
@@ -966,24 +794,20 @@ void Partitioner::LDGMultiBF()
 	*/
 }
 
-int Partitioner::calculateCuts(int partitionCount)
+/*int Partitioner::calculateCuts()
 {
 	int cuts = 0;
-  std::vector<std::vector<int>> netsInParts(partitionCount);
-  for(int i = 0; i < this->vertexCount; i++)
-  {
-    int part = this->partVec[i];
-    for(int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-    {
-      if(std::find(netsInParts[part].begin(), netsInParts[part].end(), this->sparseMatrix[k]) == netsInParts[part].end())
-      {
-        cuts++;
-        netsInParts[part].push_back(this->sparseMatrix[k]);
-      }
-    }
-  }
-  return cuts;
-}
+	for (std::vector<int> edge : this->netToPartition)
+	{
+		int partCount = 0;
+		for (int i : edge)
+		{
+			partCount++;
+		}		
+		cuts += partCount - 1;
+	}
+	return cuts;
+}*/
 
 //Private methods
  
@@ -991,9 +815,9 @@ int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<
 {
   int connectivityCount = 0;		
   for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
-  {
+    {
       if(std::find(partitionToNet[partitionID].begin(), partitionToNet[partitionID].end(), this->sparseMatrix[k]) != partitionToNet[partitionID].end())
-	      connectivityCount += 1;
+	connectivityCount += 1;
 	}
   return connectivityCount;
 }
