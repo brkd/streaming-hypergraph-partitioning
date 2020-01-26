@@ -27,12 +27,15 @@ public:
 	void calculate_hash_count(uint64_t expected_amount);*/
 };
 
+
 template<class T1, class T2>
 inline unsigned int Bloom<T1, T2>::basicHash(T1 item1, T2 item2, unsigned int seed)
 {
-	auto rand_32bit = bind(std::uniform_int_distribution<unsigned int>(0, modPrime), std::mt19937(seed));
+  //auto rand_32bit = bind(std::uniform_int_distribution<unsigned int>(0, modPrime), std::mt19937(seed));
 
-	return (rand_32bit()*item1 + rand_32bit()*item2 + rand_32bit()*item1*item2) % modPrime;
+  //return (rand_32bit()*item1 + rand_32bit()*item2 + rand_32bit()*item1*item2) % modPrime;
+
+  return item1*item2+seed%6;
 }
 
 template <class T1, class T2>

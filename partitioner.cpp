@@ -157,8 +157,8 @@ void Partitioner::check_and_write_binary_graph(std::string fileName){
     bp = fopen(bfile, "wb");
     std::cout << "Writing Binary Graph" << std::endl;
     this->write_binary_graph(fileName);
+   }
   */
-  }
 }
 
 
@@ -454,29 +454,33 @@ void Partitioner::read_graph(std::string fileName){
 }
 
 
+/*
 Partitioner::Partitioner(std::string fileName, int byteSize, int hashCount)
 {
   //Read matrix
-	std::ifstream fin(fileName);
+  
+        std::ifstream fin(fileName);
 	while (fin.peek() == '%') fin.ignore(2048, '\n');
 	fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
 	std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
 
 	//Init partition matrix
 	this->partVec = new int[this->vertexCount];
-
-	//Init bloom filter
-	this->bloomFilter = new Bloom<int, int>(byteSize, hashCount);
-
+  
+  //Init bloom filter
+  this->bloomFilter = new Bloom<int, int>(byteSize, hashCount);
+	
 	//Init sparse matrix representation
 	this->sparseMatrix = new int[this->nonzeroCount + 1];
 	this->sparseMatrixIndex = new int[this->vertexCount + 1];
 	sparseMatrix[0] = 0;
 	
 	fin.close();
-	this->read_graph(fileName);
-
+	
+	//this->read_graph(fileName);
+	
 }
+*/
 
 Partitioner::~Partitioner()
 {
@@ -833,64 +837,78 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
 
 void Partitioner::LDGBF(int partitionCount, int slackValue, double imbal)
 {
-	int* sizeArray = new int[partitionCount];
-	for (int i = 0; i < partitionCount; i++)
-	{
-		sizeArray[i] = 0;
-	}
- 
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+    }
+  
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
-  {
-    readOrder.push_back(i);
-  }
+    {
+      readOrder.push_back(i);
+    }
   std::random_shuffle(readOrder.begin(), readOrder.end());
-	
+  
   double capacityConstraint;
   int currVertexCount = 0;
-	for (int i : readOrder)
+  for (int i : readOrder)
+    {
+      if((imbal*currVertexCount) >= slackValue)
+	capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      else
+	capacityConstraint = ((double)slackValue) / partitionCount;
+      
+      double maxScore = -1.0;
+      int maxIndex = -1;
+      
+      for (int j = 0; j < partitionCount; j++)
 	{
-    if((imbal*currVertexCount) >= slackValue)
-      capacityConstraint = (imbal*currVertexCount) / partitionCount;
-    else
-      capacityConstraint = ((double)slackValue) / partitionCount;
-    double maxScore = -1.0;
-	  int maxIndex = -1;
-		for (int j = 0; j < partitionCount; j++)
+	  int connectivity = this->BFConnectivity(j, i);
+	  double partToCapacity = sizeArray[j] / capacityConstraint;
+	  double penalty = 1 - partToCapacity;
+	  double score = penalty * connectivity;
+	  if (score > maxScore)
+	    {
+	      maxScore = score;
+	      maxIndex = j;
+	    }
+	  else if (score == maxScore)
+	    {
+	      if (sizeArray[j] < sizeArray[maxIndex])
 		{
-			int connectivity = this->BFConnectivity(j, i);
-			double partToCapacity = sizeArray[j] / capacityConstraint;
-			double penalty = 1 - partToCapacity;
-			double score = penalty * connectivity;
-			if (score > maxScore)
-			{
-				maxScore = score;
-				maxIndex = j;
-			}
-			else if (score == maxScore)
-			{
-				if (sizeArray[j] < sizeArray[maxIndex])
-				{
-					maxIndex = j;
-				}
-			}
+		  maxIndex = j;
 		}
-		for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-		{
-			int edge = this->sparseMatrix[k];
-			if (!(this->bloomFilter->contains(k, maxIndex)))
-				this->bloomFilter->insert(k, maxIndex);
-		}
-    currVertexCount++;
-
+	    }
+	}
+      sizeArray[maxIndex] += 1;
+      for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+	{
+	  int edge = this->sparseMatrix[k];
+	  if (!(this->bloomFilter->contains(edge, maxIndex)))
+	    this->bloomFilter->insert(edge, maxIndex);
+	}
+      
+      currVertexCount++;
+      
 #ifdef WATCH
-    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
-    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
 #endif
 
-	}
-	
-	delete[] sizeArray;
+      
+      
+    }
+
+  std::cout << std::endl;
+  
+  std::cout << "******PART SIZES*******" << std::endl;
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  }
+  
+  delete[] sizeArray;
 }
 
 void Partitioner::LDGMultiBF()

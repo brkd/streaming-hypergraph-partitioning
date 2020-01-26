@@ -43,7 +43,10 @@ class Partitioner
  public:
   //Constructors
   Partitioner(std::string);
-  Partitioner(std::string, int, int);
+ Partitioner(std::string name, int a, int b):Partitioner(name)
+  {
+    this->bloomFilter = new Bloom<int, int>(a, b);
+  }
   void check_and_write_binary_graph(std::string fileName);
   
   //Destructor
