@@ -6,10 +6,14 @@
 #include <stdlib.h>
 #include <cmath>
 #include <chrono>
+//
 #include <iomanip>
+#include <stdio.h>
 
 //#define DEBUG
 #define WATCH
+#define etype int
+#define vtype int
 
 
 /*
@@ -37,6 +41,7 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
   fwrite(vwghts, sizeof(vwtype), (size_t)(nov), bp);
   return 1;
 }
+/*
   sprintf(bfile, "%s_bin/%s.bin", currFolder, gfile + dirindex + 1);
   printf("Binary file name: %s\n", bfile);
   bp = fopen(bfile, "rb");
@@ -62,7 +67,7 @@ Partitioner::Partitioner(std::string fileName){
   std::cout << "Row count: " << this->edgeCount << " Column count: " << this->vertexCount << " Non-zero count: " << this->nonzeroCount << std::endl;
   
   //Init partition matrix
-  this->partVec = new int[this->vertexCount];  
+  this->partVec = new int[this->vertexCount];
   this->bloomFilter = nullptr;
   
   //Init sparse matrix representation
@@ -75,10 +80,51 @@ Partitioner::Partitioner(std::string fileName){
   
   fin.close();
   
+  this->read_binary_graph(fileName);
   this->read_graph(fileName);
   
 }
+
+void Partitioner::read_binary_graph(std::string fileName){
   
+  const char* fname = fileName.c_str();
+  FILE* bp;
+  bp = fopen(fname, "r");
+
+  int* nnz = new int;
+  int* nets;
+  int* vertices;
+
+  fread(nnz, sizeof(int), 1, bp);
+  std::cout << "nnz: " << *nnz <<std::endl;
+
+  nets = new int[*nnz+1];
+  vertices = new int[*nnz+1];
+
+  fread(nets, sizeof(int), *nnz, bp);
+  fread(vertices, sizeof(int), *nnz, bp);
+  
+  for(int i = 0; i < 150; i++){
+    std::cout << "nets[]: " << nets[i] << " " <<vertices[i] << std::endl;
+  
+  }
+  
+  /*
+  vertices = (int*)malloc(sizeof(int) * (*nnz + 1));
+  fread(*vertices, sizeof(int), (size_t)(*nnz + 1), bp);
+  (*nets) = (int*)malloc(sizeof(int) * nnz);
+  fread(*nets, sizeof(int), (size_t)(*nnz + 1), bp);
+  */
+
+  //(*pewghts) = (ewtype*)malloc(sizeof(ewtype) * (*pxadj)[*pnov]);
+  //fread(*pewghts, sizeof(ewtype), (size_t)(*pxadj)[*pnov], bp);
+  //(*pvwghts) = (vwtype*)malloc(sizeof(vwtype) * (*pnov));
+  //fread(*pvwghts, sizeof(vwtype), *pnov, bp);
+
+    
+  exit(1);
+}
+
 
 void Partitioner::read_graph(std::string fileName){
     
