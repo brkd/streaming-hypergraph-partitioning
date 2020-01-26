@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
     partitioner->partition(algorithm, partitionCount, slackValue, imbal);   
   }
   
+  partitioner->check_and_write_binary_graph(fileName);
   delete partitioner;
   return 0;	
 }

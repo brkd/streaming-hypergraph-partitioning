@@ -28,6 +28,7 @@ class Partitioner
   //Methods
   void read_graph(std::string fileName);
   void read_binary_graph(std::string fileName);
+  void write_binary_graph(std::string fileName);
 
   void LDGp2n(int, int, double);
   void LDGn2p(int, int, double);
@@ -43,6 +44,7 @@ class Partitioner
   //Constructors
   Partitioner(std::string);
   Partitioner(std::string, int, int);
+  void check_and_write_binary_graph(std::string fileName);
   
   //Destructor
   ~Partitioner();
