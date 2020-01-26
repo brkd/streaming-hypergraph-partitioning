@@ -6,8 +6,10 @@
 #include <stdlib.h>
 #include <cmath>
 #include <chrono>
+#include <iomanip>
 
 //#define DEBUG
+#define WATCH
 
 
 /*
@@ -505,8 +507,15 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
          partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
 	  }
     currVertexCount++;
+    
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+    
   }
   
+  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
@@ -594,8 +603,13 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
     }
     
     currVertexCount++;
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
   }
   
+  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
@@ -664,7 +678,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
       }
       if (tracker[edge] == -1)
       {
-	      std::vector<int>* newEdge = new std::vector<int>();
+	std::vector<int>* newEdge = new std::vector<int>();
         netToPartition.push_back(newEdge);
         int n2pSize = netToPartition.size();
         netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
@@ -695,8 +709,15 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
       markerArray[i] = false;
     }
     currVertexCount++;
+    
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+    
   }
   
+  std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
@@ -761,6 +782,12 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, double imbal)
 				this->bloomFilter->insert(k, maxIndex);
 		}
     currVertexCount++;
+
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+
 	}
 	
 	delete[] sizeArray;
