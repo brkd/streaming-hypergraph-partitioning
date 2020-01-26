@@ -55,7 +55,7 @@ if __name__ == "__main__":
 		else:
 			print("Info for BF partitioning not sufficient")
 
-	matrix_path = "/home/hyperstream/partitioning/Matrices/"
+	matrix_path = "/gandalf/data/Hyper/just_mtx"
 
 	matrix_names = [f for f in listdir(matrix_path) if isfile(join(matrix_path, f))]
 
