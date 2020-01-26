@@ -29,10 +29,10 @@ class Partitioner
   void read_graph(std::string fileName);
   void read_binary_graph(std::string fileName);
 
-  void LDGp2n(int, int, double);
-  void LDGn2p(int, int, double);
-  void LDGn2p_i(int, int, double);
-  void LDGBF(int, int, double);
+  void LDGp2n(int, int, int, double);
+  void LDGn2p(int, int, int, double);
+  void LDGn2p_i(int, int, int, double);
+  void LDGBF(int, int, int, double);
   void LDGMultiBF();
   
   int calculateCuts(int);
@@ -48,6 +48,6 @@ class Partitioner
   ~Partitioner();
   
   //Methods
-  void partition(int, int, int, double);
+  void partition(int, int, int, int, double);
 };
 #endif

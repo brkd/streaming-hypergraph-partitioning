@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 //#define DEBUG
-#define WATCH
+//#define WATCH
 #define etype int
 #define vtype int
 
@@ -80,7 +80,7 @@ Partitioner::Partitioner(std::string fileName){
   
   fin.close();
   
-  this->read_binary_graph(fileName);
+  //this->read_binary_graph(fileName);
   this->read_graph(fileName);
   
 }
@@ -452,45 +452,45 @@ Partitioner::~Partitioner()
     delete this->bloomFilter;
 }
 
-void Partitioner::partition(int algorithm, int partitionCount, int slackValue, double imbal)
+void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal)
 { 
   //Partition
   if(algorithm == 1)
   {
     auto start = std::chrono::high_resolution_clock::now();
-    this->LDGp2n(partitionCount, slackValue, imbal);
+    this->LDGp2n(partitionCount, slackValue, seed, imbal);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 2)
   {
     auto start = std::chrono::high_resolution_clock::now();
-    this->LDGn2p(partitionCount, slackValue, imbal);
+    this->LDGn2p(partitionCount, slackValue, seed, imbal);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 3)
   {
     auto start = std::chrono::high_resolution_clock::now();
-    this->LDGn2p_i(partitionCount, slackValue, imbal);
+    this->LDGn2p_i(partitionCount, slackValue, seed, imbal);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   else if(algorithm == 4)
   {
     auto start = std::chrono::high_resolution_clock::now();
-    this->LDGBF(partitionCount, slackValue, imbal);
+    this->LDGBF(partitionCount, slackValue, seed, imbal);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   
-  std::cout << "Cuts: " << this->calculateCuts(partitionCount) << std::endl;
+  std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
   //compute cut and report  
 }
 
 
 //ALGO 1//
-void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
+void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
@@ -505,6 +505,7 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
   {
     readOrder.push_back(i);
   }
+  std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>> partitionToNet(partitionCount);  
@@ -574,7 +575,7 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, double imbal)
 }
 
 //ALGO 2//
-void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
+void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   int* indexArray = new int[partitionCount];
@@ -592,6 +593,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
   {
     readOrder.push_back(i);
   }
+  std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>*> netToPartition;  
@@ -669,7 +671,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, double imbal)
   delete[] markerArray;
 }
 
-void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
+void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double imbal)
 {
   int* sizeArray = new int[partitionCount];
   int* indexArray = new int[partitionCount];
@@ -687,6 +689,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
   {
     readOrder.push_back(i);
   }
+  std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   std::vector<std::vector<int>*> netToPartition;  
@@ -777,7 +780,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, double imbal)
   delete[] markerArray;
 }
 
-void Partitioner::LDGBF(int partitionCount, int slackValue, double imbal)
+void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imbal)
 {
 	int* sizeArray = new int[partitionCount];
 	for (int i = 0; i < partitionCount; i++)
@@ -790,6 +793,7 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, double imbal)
   {
     readOrder.push_back(i);
   }
+  std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
 	
   double capacityConstraint;

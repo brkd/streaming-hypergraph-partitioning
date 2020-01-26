@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   
   for(int i = 0; i < randomizationCount; i++)
   {
-    partitioner->partition(algorithm, partitionCount, slackValue, imbal);   
+    partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal);   
   }
   
   delete partitioner;
