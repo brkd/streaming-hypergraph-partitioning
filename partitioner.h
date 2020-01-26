@@ -27,6 +27,7 @@ class Partitioner
   
   //Methods
   void read_graph(std::string fileName);
+  void read_binary_graph(std::string fileName);
 
   void LDGp2n(int, int, double);
   void LDGn2p(int, int, double);
