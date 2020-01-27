@@ -2,6 +2,7 @@
 #define _PARTITIONER_H
 
 #include "bloomclass.h"
+#include "bf_2.hpp"
 #include <vector>
 #include <string>
 
@@ -18,12 +19,14 @@ class Partitioner
   int* sparseMatrixIndex;
   int* partVec; //pv[i] -> where i resides  
   
-  Bloom<int, int>* bloomFilter;	
+  //Bloom<int, int>* bloomFilter;	
+  BloomFilter* bloomFilter;
   
   int partitionCount;
   int vertexCount;
   int edgeCount;
   int nonzeroCount;
+  bool symmetry;
   
   //Methods
   void read_graph(std::string fileName);
@@ -45,7 +48,8 @@ class Partitioner
   Partitioner(std::string);
  Partitioner(std::string name, int a, int b):Partitioner(name)
   {
-    this->bloomFilter = new Bloom<int, int>(a, b);
+    //this->bloomFilter = new Bloom<int, int>(a, b);
+    this->bloomFilter = new BloomFilter(a);
   }
   void check_and_write_binary_graph(std::string fileName);
   
