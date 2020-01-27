@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <stdio.h>
 
-//#define DEBUG
+#define DEBUG
 #define WATCH
 
 /*
@@ -54,13 +54,11 @@ Partitioner::Partitioner(std::string fileName){
   const char* bfile = bin_name.c_str();
   
 
-  std::cout << "C1" << std::endl;
-  
   FILE* bp;
   bp = fopen(bfile, "rb");
   
-  //if(bp == NULL){
-  if(1){
+  if(bp == NULL){
+  //if(1){
     std::ifstream fin(mtx_name);
     std::string comment;
     std::getline(fin, comment);
@@ -83,34 +81,42 @@ Partitioner::Partitioner(std::string fileName){
   //Init sparse matrix representation
   this->sparseMatrixIndex = new int[this->vertexCount + 1];
   sparseMatrixIndex[0] = 0;
-  if(comment.find("symmetric") == std::string::npos)
+  if(comment.find("symmetric") == std::string::npos){
     this->sparseMatrix = new int[this->nonzeroCount + 1];
-  else
+    this->symmetry = true;
+  }
+  else{
     this->sparseMatrix = new int[this->nonzeroCount*2 + 1];
+  }
   
   fin.close();
   this->read_graph(mtx_name);
   }
   else{
-    std::cout << "Not available at the moment" << std::endl;
-    exit(1);
-    //this->read_binary_graph(bin_name);
+    //std::cout << "Not available at the moment" << std::endl;
+    //exit(1);
+    this->read_binary_graph(bin_name);
   }
 }
 
 void Partitioner::read_binary_graph(std::string fileName){
-  
   const char* fname = fileName.c_str();
   FILE* bp;
   bp = fopen(fname, "r");
 
   int* nov = new int;
+  
   fread(nov, sizeof(int), 1, bp);
   this->vertexCount = *nov;
+
+  std::cout << "NOV: " << *nov << std::endl;
   //std::cout << "nnz: " << *nnz <<std::endl;
 
   this->sparseMatrixIndex = new int[*nov+1];
   fread(this->sparseMatrixIndex, sizeof(int), *nov+1, bp);
+
+  std::cout << "LAST: " << sparseMatrixIndex[*nov] << std::endl;
+  //exit(1);
  
   this->sparseMatrix = new int[this->sparseMatrixIndex[*nov]];
   fread(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[*nov], bp);
@@ -131,30 +137,28 @@ void Partitioner::read_binary_graph(std::string fileName){
 }
 
 void Partitioner::write_binary_graph(std::string fileName){
-  fileName += ".bin";
   const char* fname = fileName.c_str();
   FILE* bp;
   bp = fopen(fname, "w");
+
+  std::cout << "This vertex count: " << this->vertexCount << std::endl;
   
-  fwrite(&this->vertexCount, sizeof(int), 1, bp);
-  fwrite(this->sparseMatrixIndex, sizeof(int), this->vertexCount+1, bp);
-  fwrite(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[this->vertexCount], bp);
+  fwrite(&this->sparseMatrixIndex[this->vertexCount*2], sizeof(int), 1, bp);
+  fwrite(this->sparseMatrixIndex, sizeof(int), this->edgeCount+1, bp);
+  fwrite(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[this->edgeCount], bp);
   fclose(bp);
 }
 
 void Partitioner::check_and_write_binary_graph(std::string fileName){
-  /*
-  std::cout << "Summoned" << std::endl;
-  //fileName += ".bin";
+  fileName += ".bin";
   const char* bfile = fileName.c_str();
   FILE* bp;
   bp = fopen(bfile, "rb");
   if(bp == NULL){
-    bp = fopen(bfile, "wb");
+    //bp = fopen(bfile, "wb");
     std::cout << "Writing Binary Graph" << std::endl;
     this->write_binary_graph(fileName);
    }
-  */
 }
 
 
@@ -625,10 +629,14 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   }
   
   std::vector<int> readOrder;
-  
+  //THIS LOOKS LIKE ITS CORRECT BUT ITS NOT//  
   for(int i = 0; i < sparseMatrixIndex[this->vertexCount]; i++){
     //std::cout << "i: " << i <<" sparseMatrixIndex[vertexCount]: " << sparseMatrixIndex[this->vertexCount] << " vertexCount: " << this->vertexCount  << " ";
-    //std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
+    std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
+  }
+
+  for(int i = 0; i < this->vertexCount; i++){
+    std::cout << "sparseMatrixIndex[" << i << "]: " << this->sparseMatrixIndex[i] << std::endl;
   }
 
   for (int i = 0; i < this->vertexCount; i++)
@@ -644,7 +652,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   int currVertexCount = 0;
 
   for (int i : readOrder) {
-    //std::cout << "i: " << i <<std::endl;
+    std::cout << "i: " << i <<std::endl;
     //std::cout << sparseMatrixIndex[this->vertexCount] << std::endl;
     
     if((imbal*currVertexCount) >= slackValue)
@@ -654,56 +662,68 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
 
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
       {
+	std::cout << "CP1" << std::endl;
+	std::cout << "k: " << k << std::endl;
+	std::cout << "index[i]: " << sparseMatrixIndex[i] << std::endl;
 	//std::cout << "index[vertexCount]: " << this->sparseMatrixIndex[this->vertexCount]<< " k: " << k << std::endl;
 	int edge = this->sparseMatrix[k];
+	std::cout << "CP2" << std::endl;
 	//std::cout << "edge: " << edge << std::endl;
 	if(edge >= tracker.size())
-      {
-        int currNetIndex = tracker.size() - 1;
-	
-        for(int j = currNetIndex; j < edge; j++)
-        {
+	  {
+	    int currNetIndex = tracker.size() - 1;
+	    std::cout << "CP3" << std::endl;
+	    for(int j = currNetIndex; j < edge; j++)
+	      {
 	        tracker.push_back(-1);
-          if(j == edge - 1)
-          {
-            std::vector<int>* newEdge = new std::vector<int>();
-    	      netToPartition.push_back(newEdge);
-    	      int n2pSize = netToPartition.size();
-    	      netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
-    	      tracker[j] = n2pSize - 1;    	      
-          }            
-        }
+		if(j == edge - 1)
+		  {
+		    std::cout << "CP3" << std::endl;
+		    std::vector<int>* newEdge = new std::vector<int>();
+		    netToPartition.push_back(newEdge);
+		    int n2pSize = netToPartition.size();
+		    netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+		    tracker[j] = n2pSize - 1;    	      
+		    std::cout << "CP4" << std::endl;
+		  }            
+	      }
       }
-      if (tracker[edge] == -1)
-      {
-	std::vector<int>* newEdge = new std::vector<int>();
-        netToPartition.push_back(newEdge);
-        int n2pSize = netToPartition.size();
-        netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
-        tracker[edge] = n2pSize - 1;        
+	if (tracker[edge] == -1)
+	  {
+	    std::cout << "CP5" << std::endl;
+	    std::vector<int>* newEdge = new std::vector<int>();
+	    netToPartition.push_back(newEdge);
+	    int n2pSize = netToPartition.size();
+	    netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+	    tracker[edge] = n2pSize - 1;        
+	    std::cout << "CP6" << std::endl;
+	  }
       }
-    }
-
+    
+    std::cout << "CP6" << std::endl;
     int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
+    std::cout << "CP7" << std::endl;
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
     
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-    {
-      int edge = this->sparseMatrix[k];      
-      if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
-        netToPartition[tracker[edge]]->push_back(maxIndex);      
-    }
-     
+      {
+	std::cout << "CP8" << std::endl;
+	int edge = this->sparseMatrix[k];      
+	if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
+	  netToPartition[tracker[edge]]->push_back(maxIndex);      
+	std::cout << "CP9" << std::endl;
+      }
+    
     for (int i = 0; i < partitionCount; i++) {
       indexArray[i] = -1;
       markerArray[i] = false;
     }
-    
+    std::cout << "CP10 LAST" << std::endl;
     currVertexCount++;
 #ifdef WATCH
     std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
-    if(((double)currVertexCount/this->vertexCount)*100 < double(100)){
+    if(((double)currVertexCount/this->vertexCount)*100 < double(100.9)){
       std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
     }else{
       std::cout << std::fixed << std::setprecision(2) << "Progress: " << "???" << "%" << std::flush;;
@@ -865,6 +885,7 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
       for (int j = 0; j < partitionCount; j++)
 	{
 	  int connectivity = this->BFConnectivity(j, i);
+	  //std::cout <<"partition " << j <<  " Conn: " << this->BFConnectivity(j, i) << std::endl;
 	  double partToCapacity = sizeArray[j] / capacityConstraint;
 	  double penalty = 1 - partToCapacity;
 	  double score = penalty * connectivity;
@@ -882,10 +903,11 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
 	    }
 	}
       sizeArray[maxIndex] += 1;
+      
       for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
 	{
 	  int edge = this->sparseMatrix[k];
-	  if (!(this->bloomFilter->contains(edge, maxIndex)))
+	  //if (!(this->bloomFilter->contains(edge, maxIndex)))
 	    this->bloomFilter->insert(edge, maxIndex);
 	}
       
@@ -1075,13 +1097,13 @@ int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstra
 
 int Partitioner::BFConnectivity(int partitionID, int vertex)
 {
-	int connectivityCount = 0;
-	for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
-	{
-		int edge = this->sparseMatrix[k];
-		if ((this->bloomFilter)->contains(edge, partitionID))
-			connectivityCount++;
+  int connectivityCount = 0;
+  for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
+    {
+      int edge = this->sparseMatrix[k];
+      if ((this->bloomFilter)->query(edge, partitionID))
+	connectivityCount++;
 	}
-
-	return connectivityCount;
+  
+  return connectivityCount;
 }

@@ -35,7 +35,8 @@ inline unsigned int Bloom<T1, T2>::basicHash(T1 item1, T2 item2, unsigned int se
 
   //return (rand_32bit()*item1 + rand_32bit()*item2 + rand_32bit()*item1*item2) % modPrime;
 
-  return item1*item2+seed%6;
+  //return item1*23+item2*47+seed*49%this->size;
+  return 8;
 }
 
 template <class T1, class T2>
