@@ -632,12 +632,14 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   //THIS LOOKS LIKE ITS CORRECT BUT ITS NOT//  
   for(int i = 0; i < sparseMatrixIndex[this->vertexCount]; i++){
     //std::cout << "i: " << i <<" sparseMatrixIndex[vertexCount]: " << sparseMatrixIndex[this->vertexCount] << " vertexCount: " << this->vertexCount  << " ";
-    std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
+    //std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
   }
 
+  /*
   for(int i = 0; i < this->vertexCount; i++){
     std::cout << "sparseMatrixIndex[" << i << "]: " << this->sparseMatrixIndex[i] << std::endl;
   }
+  */
 
   for (int i = 0; i < this->vertexCount; i++)
   {
@@ -652,8 +654,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   int currVertexCount = 0;
 
   for (int i : readOrder) {
-    std::cout << "i: " << i <<std::endl;
-    //std::cout << sparseMatrixIndex[this->vertexCount] << std::endl;
+    
     
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
@@ -662,64 +663,52 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
 
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
       {
-	std::cout << "CP1" << std::endl;
-	std::cout << "k: " << k << std::endl;
-	std::cout << "index[i]: " << sparseMatrixIndex[i] << std::endl;
+	//std::cout << "k: " << k << std::endl;
+	//std::cout << "index[i]: " << sparseMatrixIndex[i] << std::endl;
 	//std::cout << "index[vertexCount]: " << this->sparseMatrixIndex[this->vertexCount]<< " k: " << k << std::endl;
 	int edge = this->sparseMatrix[k];
-	std::cout << "CP2" << std::endl;
 	//std::cout << "edge: " << edge << std::endl;
 	if(edge >= tracker.size())
 	  {
 	    int currNetIndex = tracker.size() - 1;
-	    std::cout << "CP3" << std::endl;
 	    for(int j = currNetIndex; j < edge; j++)
 	      {
 	        tracker.push_back(-1);
 		if(j == edge - 1)
 		  {
-		    std::cout << "CP3" << std::endl;
 		    std::vector<int>* newEdge = new std::vector<int>();
 		    netToPartition.push_back(newEdge);
 		    int n2pSize = netToPartition.size();
 		    netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
 		    tracker[j] = n2pSize - 1;    	      
-		    std::cout << "CP4" << std::endl;
 		  }            
 	      }
       }
 	if (tracker[edge] == -1)
 	  {
-	    std::cout << "CP5" << std::endl;
 	    std::vector<int>* newEdge = new std::vector<int>();
 	    netToPartition.push_back(newEdge);
 	    int n2pSize = netToPartition.size();
 	    netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
 	    tracker[edge] = n2pSize - 1;        
-	    std::cout << "CP6" << std::endl;
 	  }
       }
     
-    std::cout << "CP6" << std::endl;
     int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
-    std::cout << "CP7" << std::endl;
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
     
     for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
       {
-	std::cout << "CP8" << std::endl;
 	int edge = this->sparseMatrix[k];      
 	if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
 	  netToPartition[tracker[edge]]->push_back(maxIndex);      
-	std::cout << "CP9" << std::endl;
       }
     
     for (int i = 0; i < partitionCount; i++) {
       indexArray[i] = -1;
       markerArray[i] = false;
     }
-    std::cout << "CP10 LAST" << std::endl;
     currVertexCount++;
 #ifdef WATCH
     std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
