@@ -32,7 +32,7 @@ class Partitioner
   void read_graph(std::string fileName);
   void read_binary_graph(std::string fileName);
   void write_binary_graph(std::string fileName);
-
+  
   void LDGp2n(int, int, int, double);
   void LDGn2p(int, int, int, double);
   void LDGn2p_i(int, int, int, double);
@@ -46,7 +46,7 @@ class Partitioner
  public:
   //Constructors
   Partitioner(std::string);
- Partitioner(std::string name, int a, int b):Partitioner(name)
+  Partitioner(std::string name, int a, int b):Partitioner(name)
   {
     //this->bloomFilter = new Bloom<int, int>(a, b);
     this->bloomFilter = new BloomFilter(a);
@@ -58,5 +58,6 @@ class Partitioner
   
   //Methods
   void partition(int, int, int, int, double);
+  void RandomPartition(int, int);
 };
 #endif

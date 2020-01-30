@@ -528,6 +528,39 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
   //compute cut and report  
 }
 
+//ALGO 0//
+void Partitioner::RandomPartition(int partitionCount, int seed)
+{
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
+  {
+    sizeArray[i] = 0;
+  }
+    
+  std::default_random_engine generator;
+  std::uniform_int_distribution<int> distribution(0, partitionCount - 1);
+  
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+  {
+    readOrder.push_back(i);
+  }
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  
+  for (int i : readOrder)
+  {
+    int partition = distribution(generator);
+    sizeArray[partition] += 1;
+    partVec[i] = partition;
+  }
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  }
+
+  delete[] sizeArray;
+}
 
 //ALGO 1//
 void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double imbal)
@@ -790,7 +823,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
       }
       if (tracker[edge] == -1)
       {
-	std::vector<int>* newEdge = new std::vector<int>();
+	      std::vector<int>* newEdge = new std::vector<int>();
         netToPartition.push_back(newEdge);
         int n2pSize = netToPartition.size();
         netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
