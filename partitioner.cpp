@@ -10,8 +10,8 @@
 #include <iomanip>
 #include <stdio.h>
 
-#define DEBUG
-#define WATCH
+//#define DEBUG
+//#define WATCH
 
 /*
 int readBinaryGraph(FILE* bp, etype **pxadj, vtype **padj,
@@ -38,7 +38,7 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
   fwrite(vwghts, sizeof(vwtype), (size_t)(nov), bp);
   return 1;
 }
-/*
+
   sprintf(bfile, "%s_bin/%s.bin", currFolder, gfile + dirindex + 1);
   printf("Binary file name: %s\n", bfile);
   bp = fopen(bfile, "rb");
@@ -76,6 +76,7 @@ Partitioner::Partitioner(std::string fileName){
   
   //Init partition matrix
   this->partVec = new int[this->vertexCount];
+  this->scoreArray = new double[this->vertexCount];
   this->bloomFilter = nullptr;
   
   //Init sparse matrix representation
@@ -485,6 +486,7 @@ Partitioner::Partitioner(std::string fileName, int byteSize, int hashCount)
 Partitioner::~Partitioner()
 {
   delete[] this->partVec;
+  delete[] this->scoreArray;
   delete[] this->sparseMatrix;
   delete[] this->sparseMatrixIndex;
   
@@ -525,6 +527,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
   }
   
   std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
+  this->vertexOutput(algorithm, seed);
   //compute cut and report  
 }
 
@@ -563,7 +566,7 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
     double maxScore = -1.0;
     int maxIndex = -1;
     for (int j = 0; j < partitionCount; j++)
-	  {
+    {
 	    int connectivity = this->p2nConnectivity(j, i, partitionToNet);
 	    //int connectivity = 0;
 	    //std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
@@ -579,11 +582,12 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
 	    else if (score == maxScore)
 	    {
 	      if (sizeArray[j] < sizeArray[maxIndex])
-		    {
+	      {
 		      maxIndex = j;
-		    }
+	      }
 	    }
-	  }
+    }
+    scoreArray[i] = maxScore;
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
     int maxIndexSize = partitionToNet[maxIndex].size() - 1;
@@ -630,10 +634,10 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   
   std::vector<int> readOrder;
   //THIS LOOKS LIKE ITS CORRECT BUT ITS NOT//  
-  for(int i = 0; i < sparseMatrixIndex[this->vertexCount]; i++){
+  /*for(int i = 0; i < sparseMatrixIndex[this->vertexCount]; i++){
     //std::cout << "i: " << i <<" sparseMatrixIndex[vertexCount]: " << sparseMatrixIndex[this->vertexCount] << " vertexCount: " << this->vertexCount  << " ";
     //std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
-  }
+  }*/
 
   /*
   for(int i = 0; i < this->vertexCount; i++){
@@ -891,6 +895,8 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
 		}
 	    }
 	}
+      partVec[i] = maxIndex;
+      scoreArray[i] = maxScore;
       sizeArray[maxIndex] += 1;
       
       for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
@@ -977,6 +983,37 @@ void Partitioner::LDGMultiBF()
 	*/
 }
 
+void Partitioner::vertexOutput(int algorithm, int seed)
+{
+  string textName;
+
+  if(algorithm == 1)
+      textName = "P2Nvertex.txt";
+  else if(algorithm == 2)
+      textName = "N2Pvertex.txt";
+  else if(algorithm == 3)
+      textName = "N2P_Kvertex.txt";
+  else if(algorithm == 3)
+      textName = "BFvertex.txt";
+    
+  std::ofstream outfile;
+  outfile.open(textName, std::ios_base::app);
+
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+  {
+    readOrder.push_back(i);
+  }
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+
+  for (int i : readOrder)
+  {
+        outfile << i << "," << partVec[i] << "," << scoreArray[i] << "\n";
+  }
+  outfile.close();
+}
+
 int Partitioner::calculateCuts(int partitionCount)
 {
 	int cuts = 0;
@@ -1037,21 +1074,21 @@ int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstra
 	  int edgeIndex = tracker[edge];
     
 	  for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
-		{
-      int part = netToPartition[edgeIndex]->at(i);
-      if (markerArray[part])
-      {       
-		    encounterArray[indexArray[part]] += 1;        
-		  }		    
-		  else
-		  {
-		    encounterArray.push_back(1);
-		    indexArray[part] = encounterArray.size() - 1;
-		    markerArray[part] = true;
-      }
-		}
+	  {
+      	      int part = netToPartition[edgeIndex]->at(i);
+              if (markerArray[part])
+              {       
+	        encounterArray[indexArray[part]] += 1;        
+              }		    
+	      else
+	      {
+	        encounterArray.push_back(1);
+	        indexArray[part] = encounterArray.size() - 1;
+	        markerArray[part] = true;
+              }
+	  }
     
-  }
+        }
   
 	double maxScore = -1.0;
 	int maxIndex = -1;
@@ -1066,22 +1103,24 @@ int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstra
 	    double partOverCapacity = sizeArray[i] / capacityConstraint;     
 	    double penalty = 1 - partOverCapacity;
 	    double score = penalty * connectivity;
-      if (score > maxScore)
-      {
-        maxScore = score;
-        maxIndex = i;
+            if (score > maxScore)
+            {
+                maxScore = score;
+                maxIndex = i;
 	    }      
 	    else if (score == maxScore)
 	    {
         
-		    if (sizeArray[i] < sizeArray[maxIndex])
-		    {
-		      maxIndex = i;
-		    } 	      
+		if (sizeArray[i] < sizeArray[maxIndex])
+		{
+		    maxIndex = i;
+		} 	      
 	    }
 
-  }
-	return maxIndex;
+        }
+
+    this->scoreArray[vertex] = maxScore;	
+    return maxIndex;
 }
 
 int Partitioner::BFConnectivity(int partitionID, int vertex)

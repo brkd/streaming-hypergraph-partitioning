@@ -17,7 +17,8 @@ class Partitioner
   //Attributes
   int* sparseMatrix;
   int* sparseMatrixIndex;
-  int* partVec; //pv[i] -> where i resides  
+  int* partVec; //pv[i] -> where i resides
+  double* scoreArray;   
   
   //Bloom<int, int>* bloomFilter;	
   BloomFilter* bloomFilter;
@@ -39,14 +40,16 @@ class Partitioner
   void LDGBF(int, int, int, double);
   void LDGMultiBF();
   
+  void vertexOutput(int, int);
   int calculateCuts(int);
+
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
   int BFConnectivity(int, int);
  public:
   //Constructors
   Partitioner(std::string);
- Partitioner(std::string name, int a, int b):Partitioner(name)
+  Partitioner(std::string name, int a, int b):Partitioner(name)
   {
     //this->bloomFilter = new Bloom<int, int>(a, b);
     this->bloomFilter = new BloomFilter(a);

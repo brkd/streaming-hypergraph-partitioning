@@ -11,8 +11,8 @@ import csv
 csv_header = ["Algo", "Run-time", "Cuts", "Slack-val", "Imbal", "Byte-size", "Hash-count", "Part-count", "SD"]
 
 def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_value, randomization_count, byte_size, hash_count):
-	csv_name = matrix_name.replace(".mtx", "") + ".csv"
-	with open(csv_name, "a") as f:
+	csv_name = "Results/" + matrix_name.replace(".mtx", "") + ".csv"
+	with open(csv_name, "a+") as f:
 		writer = csv.writer(f)
 		size_vecs = []
 		size_vec = []
@@ -37,10 +37,10 @@ def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_v
 			writer.writerow([algorithm, durations[i], cuts[i], slack_value, imbal, byte_size, hash_count, partition_count, devs[i], size_vecs[i]])
 
 def start_partitioning(algorithm, partition_count, imbal, slack_value, matrix_name, randomization_count, byte_size=-1, hash_count=-1):
-	args = ("./main", algorithm, partition_count, imbal, slack_value, "Matrices/" + matrix_name, randomization_count)
-	popen = subprocess.Popen(args, stdout=subprocess.PIPE)
-	output = popen.stdout.read()
-	write_output(matrix_name, output.decode('utf-8'), algorithm, partition_count, imbal, slack_value, randomization_count, byte_size, hash_count)
+        args = ("./main", algorithm, partition_count, imbal, slack_value, "Matrices/" + matrix_name.replace(".mtx", ""), randomization_count)
+        popen = subprocess.Popen(args, stdout=subprocess.PIPE)
+        output = popen.stdout.read()
+        write_output(matrix_name, output.decode('utf-8'), algorithm, partition_count, imbal, slack_value, randomization_count, byte_size, hash_count)
 	
 if __name__ == "__main__":
 	algorithm = sys.argv[1]
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 		else:
 			print("Info for BF partitioning not sufficient")
 
-	matrix_path = "/gandalf/data/Hyper/just_mtx"
+	matrix_path = "/home/brkd/Repos/streaming-hypergraph-partitioning/Matrices"
 
 	matrix_names = [f for f in listdir(matrix_path) if isfile(join(matrix_path, f))]
 
