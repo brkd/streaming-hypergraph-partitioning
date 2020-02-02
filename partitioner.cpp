@@ -865,6 +865,87 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
   delete[] sizeArray;
 }
 
+void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double imbal)
+{
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+    }
+  
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+  {
+    readOrder.push_back(i);
+  }
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  
+  double capacityConstraint;
+  int currVertexCount = 0;
+  for (int i : readOrder)
+    {
+      if((imbal*currVertexCount) >= slackValue)
+	capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      else
+	capacityConstraint = ((double)slackValue) / partitionCount;
+      
+      double maxScore = -1.0;
+      int maxIndex = -1;
+      
+      for (int j = 0; j < partitionCount; j++)
+	{
+	  int connectivity = this->BFConnectivity(j, i);
+	  //std::cout <<"partition " << j <<  " Conn: " << this->BFConnectivity(j, i) << std::endl;
+	  double partToCapacity = sizeArray[j] / capacityConstraint;
+	  double penalty = 1 - partToCapacity;
+	  double score = penalty * connectivity;
+	  if (score > maxScore)
+	    {
+	      maxScore = score;
+	      maxIndex = j;
+	    }
+	  else if (score == maxScore)
+	    {
+	      if (sizeArray[j] < sizeArray[maxIndex])
+		{
+		  maxIndex = j;
+		}
+	    }
+	}
+      partVec[i] = maxIndex;
+      scoreArray[i] = maxScore;
+      sizeArray[maxIndex] += 1;
+      
+      for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+	{
+	  int edge = this->sparseMatrix[k];
+	  //if (!(this->bloomFilter->contains(edge, maxIndex)))
+	    this->bloomFilter->insert(edge, maxIndex);
+	}
+      
+      currVertexCount++;
+      
+#ifdef WATCH
+      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+
+      
+      
+    }
+
+  std::cout << std::endl;
+  
+  std::cout << "******PART SIZES*******" << std::endl;
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  }
+  
+  delete[] sizeArray;
+}
+
 void Partitioner::LDGMultiBF()
 {
   /*	int* sizeArray = new int[this->partitionCount];
@@ -953,20 +1034,20 @@ void Partitioner::vertexOutput(int algorithm, int seed)
 
 int Partitioner::calculateCuts(int partitionCount)
 {
-	int cuts = 0;
+  int cuts = 0;
   std::vector<std::vector<int>> netsInParts(partitionCount);
   for(int i = 0; i < this->vertexCount; i++)
-  {
-    int part = this->partVec[i];
-    for(int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
     {
-      if(std::find(netsInParts[part].begin(), netsInParts[part].end(), this->sparseMatrix[k]) == netsInParts[part].end())
-      {
-        cuts++;
-        netsInParts[part].push_back(this->sparseMatrix[k]);
-      }
+      int part = this->partVec[i];
+      for(int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+	{
+	  if(std::find(netsInParts[part].begin(), netsInParts[part].end(), this->sparseMatrix[k]) == netsInParts[part].end())
+	    {
+	      cuts++;
+	      netsInParts[part].push_back(this->sparseMatrix[k]);
+	    }
+	}
     }
-  }
   return cuts;
 }
 
@@ -976,13 +1057,13 @@ int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<
 {
   int connectivityCount = 0;		
   for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
-  {
+    {
       if(std::find(partitionToNet[partitionID].begin(), partitionToNet[partitionID].end(), this->sparseMatrix[k]) != partitionToNet[partitionID].end())
-	      connectivityCount += 1;
-	}
+	connectivityCount += 1;
+    }
   return connectivityCount;
 }
- 
+
 
   ///Manual connectivity
   /*
@@ -1067,6 +1148,19 @@ int Partitioner::BFConnectivity(int partitionID, int vertex)
     {
       int edge = this->sparseMatrix[k];
       if ((this->bloomFilter)->query(edge, partitionID))
+	connectivityCount++;
+	}
+  
+  return connectivityCount;
+}
+
+int Partitioner::BFConnectivity2(int partitionID, int edge)
+{
+  int connectivityCount = 0;
+  for (int k = this->sparseMatrixIndex[edge]; k < this->sparseMatrixIndex[edge + 1]; k++)
+    {
+      int val = this->sparseMatrix[k];
+      if ((this->bloomFilter)->query(val, partitionID))
 	connectivityCount++;
 	}
   
