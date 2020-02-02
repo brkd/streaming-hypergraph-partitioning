@@ -41,6 +41,7 @@ class Partitioner
   
   void vertexOutput(int, int);
   int calculateCuts(int);
+  int calculateCuts2(int);
 
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);

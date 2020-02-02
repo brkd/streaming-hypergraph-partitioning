@@ -429,7 +429,8 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
     std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
   
-  std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
+  //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
+  std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
   this->vertexOutput(algorithm, seed);
   //compute cut and report  
 }
@@ -1070,4 +1071,37 @@ int Partitioner::BFConnectivity(int partitionID, int vertex)
 	}
   
   return connectivityCount;
+}
+
+int Partitioner::calculateCuts2(int partitionCount)
+{
+  int cuts = 0;
+  bool* arr = new bool[partitionCount];
+  
+  for(int b = 0; b < partitionCount; b++){
+    arr[b] = 0;
+  }
+  
+  for(int i = 0; i < this->edgeCount; i++)
+    {
+      int net = i;
+      int cut = 0;
+      
+      for(int k = this->sparseMatrixIndex[net]; k < this->sparseMatrixIndex[net + 1]; k++)
+	{
+	  int vertex = sparseMatrix[k];
+	  int part = this->partVec[vertex];
+	  
+	  arr[part] = 1;	  
+	}
+      for(int b = 0; b < partitionCount; b++){
+	if(arr[b])
+	  cut++;
+      }
+      cuts += cut-1;
+      for(int b = 0; b < partitionCount; b++){
+	arr[b] = 0;
+      }
+    }
+  return cuts;
 }
