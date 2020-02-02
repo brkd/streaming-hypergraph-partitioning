@@ -11,11 +11,7 @@
 #include <stdio.h>
 
 //#define DEBUG
-<<<<<<< HEAD
 //#define WATCH
-=======
-#define WATCH
->>>>>>> 8e52ff8ee0dbe71cbb8b0ea3a4225e11b6de3e7e
 
 /*
 int readBinaryGraph(FILE* bp, etype **pxadj, vtype **padj,
@@ -62,33 +58,7 @@ Partitioner::Partitioner(std::string fileName){
   
   if(bp == NULL){
     this->read_mtx_and_transform_to_shpbin(fileName);
-    this->read_binary_graph(bin_name);
-    
-<<<<<<< HEAD
-  
-  while(fin.peek() == '%')
-  {    
-    fin.ignore(2048, '\n');
-  }  
-  
-  //Getting net, pin, non-zero counts
-  fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
-  
-  std::cout << "Row count: " << this->edgeCount << " Column count: " << this->vertexCount << " Non-zero count: " << this->nonzeroCount << std::endl;
-  
-  //Init partition matrix
-  this->partVec = new int[this->vertexCount];
-  this->scoreArray = new double[this->vertexCount];
-  this->bloomFilter = nullptr;
-  
-  //Init sparse matrix representation
-  this->sparseMatrixIndex = new int[this->vertexCount + 1];
-  sparseMatrixIndex[0] = 0;
-  if(comment.find("symmetric") == std::string::npos){
-    this->sparseMatrix = new int[this->nonzeroCount + 1];
-    this->symmetry = true;
-=======
->>>>>>> 8e52ff8ee0dbe71cbb8b0ea3a4225e11b6de3e7e
+    this->read_binary_graph(bin_name);    
   }
   else{
     fclose(bp);

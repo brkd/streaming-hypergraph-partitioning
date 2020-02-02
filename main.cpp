@@ -2,27 +2,17 @@
 
 int main(int argc, char** argv) {
   int algorithm = atoi(argv[1]);
-<<<<<<< HEAD
-  if (algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4) {
-    std::cout << "wrong algorithm" << endl;
-    exit(1);
-  }
-
-  int partitionCount = atoi(argv[2]);
-=======
 
   if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4) {
     std::cout << "wrong algorithm" << endl;
     exit(1);
   }
   
-  partitionCount = atoi(argv[2]);
->>>>>>> 8e52ff8ee0dbe71cbb8b0ea3a4225e11b6de3e7e
+  int partitionCount = atoi(argv[2]);
   if(partitionCount > MAXPARTNO)
   {
     std::cout << "Maximum allowed number of partitions is " << MAXPARTNO << ", setting partition count to " << MAXPARTNO << "." << std::endl;
     partitionCount = MAXPARTNO;
-<<<<<<< HEAD
   }
 
   double imbal = atof(argv[3]);
@@ -39,13 +29,10 @@ int main(int argc, char** argv) {
   int byteSize;
   int hashCount;
   Partitioner* partitioner;  
-=======
-  }
->>>>>>> 8e52ff8ee0dbe71cbb8b0ea3a4225e11b6de3e7e
+  
   
   if(algorithm == 0)
   { 
-<<<<<<< HEAD
     if(argc > 7)
     {
       byteSize = atoi(argv[7]);
@@ -56,16 +43,15 @@ int main(int argc, char** argv) {
     {
       std::cout << "Missing info for BF " << std::endl;
       exit(1);
-=======
-    fileName = argv[3];
-    randomizationCount = atoi(argv[4]);
-    Partitioner randomPartitioner(fileName);
+      fileName = argv[3];
+      randomizationCount = atoi(argv[4]);
+      Partitioner randomPartitioner(fileName);
     
     for(int i = 0; i < randomizationCount; i++)
     {
       randomPartitioner.RandomPartition(partitionCount, i);   
->>>>>>> 8e52ff8ee0dbe71cbb8b0ea3a4225e11b6de3e7e
     }
+  }
   }
   else
   {   
