@@ -51,10 +51,10 @@ Partitioner::Partitioner(std::string fileName){
   
   std::string mtx_name = fileName + ".mtx";
   std::string bin_name = fileName + ".shpbin";
-  const char* bfile = bin_name.c_str();
-  
+  const char* bfile = bin_name.c_str();  
   FILE* bp;
   bp = fopen(bfile, "rb");
+  
   
   if(bp == NULL){
     this->read_mtx_and_transform_to_shpbin(fileName);
@@ -64,6 +64,7 @@ Partitioner::Partitioner(std::string fileName){
     fclose(bp);
     this->read_binary_graph(bin_name);
   }
+  this->scoreArray = new double[this->vertexCount];
 }
 
   
