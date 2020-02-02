@@ -110,8 +110,7 @@ Partitioner::Partitioner(std::string fileName){
 #endif
   
   fclose(bp);
-  //exit(1);
-}
+  }
 
 bool sortbyfirst(const pair<int,int> &a, const pair<int,int> &b) 
 { 
@@ -125,8 +124,6 @@ bool sortbysec(const pair<int,int> &a, const pair<int,int> &b)
 
 void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 
-  std::cout << "sa" << std::endl;
-  
   std::string mtx_name = fileName + ".mtx";
   std::string bin_name = fileName + ".shpbin";
   const char* bfile = bin_name.c_str();
@@ -186,7 +183,7 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     fin.ignore(2048, '\n');
   }  
 
-  int vIndex = 0, row, col, currentColumn = -1;
+  //int vIndex = 0, row, col, currentColumn = -1;
   float val1;
   float val2;
   int val3;
@@ -261,6 +258,7 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
       }
     }
     
+#ifdef DEBUG
     for(int i = 0; i < 100; i ++){
       
       std::cout << "i: " << i << " ||| xadj: " << xadj[i] << " edge: " << adj[i] << std::endl;
@@ -268,9 +266,8 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 
     std::cout << intermediate.size() << " ||| " << nnz+1 << std::endl;
     std::cout << intermediate[intermediate.size()-1].second << " ||| " << no_col << std::endl;
-    
-    //exit(1);
-    
+#endif
+        
   }
   
   if(_symmetric){
@@ -343,13 +340,11 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
       
       std::cout << "i: " << i << " ||| xadj: " << xadj[i] << " adj: " << adj[i] << std::endl;
     }
-#endif
     
     std::cout << intermediate.size() << " ||| " << nnz+1 << std::endl;
     std::cout << intermediate[intermediate.size()-1].second << " ||| " << no_col << std::endl;
     std::cout << intermediate[intermediate.size()].second << " ||| " << no_col << std::endl;
-    
-    //exit(1);
+#endif
     
   }
   
@@ -361,8 +356,7 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
   
   fin.close();
   
-  std::cout << "HERE 9" << std::endl;
-
+  
   int* no_vertex;
   no_vertex = &no_row;
   int* no_nets;
@@ -375,17 +369,14 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
   FILE* bp;
   bp = fopen(fname, "w");
   
-  
+#ifdef DEBUG
   std::cout << "No vertex: " << *no_vertex << " No nets: " << *no_nets << " No nz: " << *no_nz << std::endl;
-  
-  fwrite(no_vertex, sizeof(int), 1, bp);
+#endif
 
+  fwrite(no_vertex, sizeof(int), 1, bp);
   fwrite(no_nets, sizeof(int), 1, bp);
-  
   fwrite(no_nz, sizeof(int), 1, bp);
-  
   fwrite(xadj, sizeof(int), *no_nets, bp);
-  
   fwrite(adj, sizeof(int), *no_nz, bp);
   
   fclose(bp);
