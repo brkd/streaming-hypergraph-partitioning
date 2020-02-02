@@ -10,8 +10,8 @@
 #include <iomanip>
 #include <stdio.h>
 
-//#define DEBUG
-//#define WATCH
+#define DEBUG
+#define WATCH
 
 /*
 int readBinaryGraph(FILE* bp, etype **pxadj, vtype **padj,
@@ -99,6 +99,16 @@ Partitioner::Partitioner(std::string fileName){
   this->sparseMatrix = new int[*nnz];
   fread(this->sparseMatrix, sizeof(int), *nnz, bp);
 
+  //Reverse reads
+
+  this->reverse_sparseMatrixIndex = new int[*nov];
+  fread(this->reverse_sparseMatrixIndex, sizeof(int), *nov, bp);
+  
+  this->reverse_sparseMatrix = new int[*nnz];
+  fread(this->reverse_sparseMatrix, sizeof(int), *nnz, bp);
+
+  //
+
   this->partVec = new int[this->vertexCount];
   this->bloomFilter = nullptr;
   
@@ -106,6 +116,13 @@ Partitioner::Partitioner(std::string fileName){
   std::cout << "First indexes of xadj and adj" << std::endl;
   for(int i = 0; i < 150; i++){
     std::cout << "i: " << i  << " " <<this->sparseMatrixIndex[i] << " " << sparseMatrix[i] << std::endl;
+  }
+  
+  std::cout << "###############REVERSE#################" << std::endl;
+  
+  std::cout << "First indexes of reverse xadj and adj" << std::endl;
+  for(int i = 0; i < 150; i++){
+    std::cout << "i: " << i  << " " <<this->reverse_sparseMatrixIndex[i] << " " << reverse_sparseMatrix[i] << std::endl;
   }
 #endif
   
@@ -130,6 +147,12 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 
   int* xadj;
   int* adj;
+
+  int* reverse_xadj;
+  int* reverse_adj;
+
+  int* no_vertex;
+  int* no_nets;
   
   //FIELD//
   bool _real = false;
@@ -239,9 +262,11 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
       
     }
     
+    std::cout << "Sorting.. " << std::endl;
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
     
+    no_nets = &intermediate[intermediate.size()-1].second;
     adj = new int[intermediate.size()];
     xadj = new int[no_col+1];
     
@@ -261,13 +286,60 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 #ifdef DEBUG
     for(int i = 0; i < 100; i ++){
       
-      std::cout << "i: " << i << " ||| xadj: " << xadj[i] << " edge: " << adj[i] << std::endl;
+      std::cout << "i: " << i << " ||| xadj: " << xadj[i] << " adj: " << adj[i] << std::endl;
     }
 
     std::cout << intermediate.size() << " ||| " << nnz+1 << std::endl;
     std::cout << intermediate[intermediate.size()-1].second << " ||| " << no_col << std::endl;
 #endif
-        
+
+
+    //REVERSE ORDER
+    std::cout << "Reverse sorting.. " << std::endl;
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+
+    std::cout << "AFTER REVERSE SORTING, INTERMEDIATE: " << std::endl;
+
+    for(int i = 0; i < 200; i++){
+
+      std::cout << "i: " << i << " ||-|| " << intermediate[i].first << " " << intermediate[i].second << std::endl; 
+ 
+
+    }
+
+    no_vertex = &intermediate[intermediate.size()-1].first;
+    reverse_adj = new int[intermediate.size()];
+    reverse_xadj = new int[no_row+1];
+    
+    reverse_xadj[0] = 0;
+    
+    int current_vertex = 0;
+    int r_xadj_cursor = 1;
+
+    for(int i = 0; i < intermediate.size(); i++){
+      reverse_adj[i] = intermediate[i].second;
+      
+      if(intermediate[i].first != current_vertex){
+	reverse_xadj[r_xadj_cursor] = i;
+	r_xadj_cursor++;
+	current_vertex = intermediate[i].first;
+      }
+    }
+
+#ifdef DEBUG
+    for(int i = 0; i < 100; i ++){
+      
+      std::cout << "i: " << i << " ||| reverse_xadj: " << reverse_xadj[i] << " adj: " << reverse_adj[i] << std::endl;
+    }
+
+    std::cout << intermediate.size() << " ||| " << nnz+1 << std::endl;
+    std::cout << intermediate[intermediate.size()-1].second << " ||| " << no_col << std::endl;
+#endif
+
+
+    //REVERSE ORDER
+    
   }
   
   if(_symmetric){
@@ -304,6 +376,7 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
       
     }
     
+    std::cout << "Sorting.. " << std::endl;
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
 
@@ -315,6 +388,7 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
       //std::cout << "Deduplicating " << i << "/" << intermediate.size() << std::endl;
     }
     
+    no_nets = &intermediate[intermediate.size()-1].second;
     adj = new int[intermediate.size()];
     xadj = new int[no_col+1];
     
@@ -346,6 +420,42 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     std::cout << intermediate[intermediate.size()].second << " ||| " << no_col << std::endl;
 #endif
     
+    //REVERSE ORDER
+    std::cout << "Reverse sorting.. " << std::endl;
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+
+    no_vertex = &intermediate[intermediate.size()-1].first;
+    reverse_adj = new int[intermediate.size()];
+    reverse_xadj = new int[no_row+1];
+    
+    reverse_xadj[0] = 0;
+    
+    int current_vertex = 0;
+    int r_xadj_cursor = 1;
+
+    for(int i = 0; i < intermediate.size(); i++){
+      adj[i] = intermediate[i].second;
+      
+      if(intermediate[i].first != current_vertex){
+	reverse_xadj[r_xadj_cursor] = i;
+	r_xadj_cursor++;
+	current_vertex = intermediate[i].first;
+      }
+    }
+
+#ifdef DEBUG
+    for(int i = 0; i < 100; i ++){
+      
+      std::cout << "i: " << i << " ||| reverse_xadj: " << reverse_xadj[i] << " adj: " << reverse_adj[i] << std::endl;
+    }
+
+    std::cout << intermediate.size() << " ||| " << nnz+1 << std::endl;
+    std::cout << intermediate[intermediate.size()-1].second << " ||| " << no_col << std::endl;
+#endif
+
+    //REVERSE ORDER
+
   }
   
   if(!_general && !_symmetric)
@@ -357,13 +467,12 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
   fin.close();
   
   
-  int* no_vertex;
-  no_vertex = &no_row;
-  int* no_nets;
-  no_nets = &intermediate[intermediate.size()-1].second;
   int np_nz = intermediate.size();
   int* no_nz;
   no_nz = &np_nz;
+
+  no_vertex = &no_row;
+  no_nets = &no_col;
   
   const char* fname = bin_name.c_str();
   FILE* bp;
@@ -376,13 +485,21 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
   fwrite(no_vertex, sizeof(int), 1, bp);
   fwrite(no_nets, sizeof(int), 1, bp);
   fwrite(no_nz, sizeof(int), 1, bp);
-  fwrite(xadj, sizeof(int), *no_nets, bp);
+  fwrite(xadj, sizeof(int), *no_nets-1, bp);
   fwrite(adj, sizeof(int), *no_nz, bp);
+  fwrite(reverse_xadj, sizeof(int), *no_vertex-1, bp);
+  fwrite(reverse_adj, sizeof(int), *no_nz, bp);
   
   fclose(bp);
 
+  std::cout << "Wrote the bin.. " << std::endl;
+  
   delete[] xadj;
   delete[] adj;
+
+  delete[] reverse_xadj;
+  delete[] reverse_adj;
+
 }
 
 
@@ -595,8 +712,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   int currVertexCount = 0;
 
   for (int i : readOrder) {
-    
-    
+ 
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
@@ -606,9 +722,11 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
       {
 	//std::cout << "k: " << k << std::endl;
 	//std::cout << "index[i]: " << sparseMatrixIndex[i] << std::endl;
+	//std::cout << "index[i+1]: " << sparseMatrixIndex[i+1] << std::endl;
 	//std::cout << "index[vertexCount]: " << this->sparseMatrixIndex[this->vertexCount]<< " k: " << k << std::endl;
 	int edge = this->sparseMatrix[k];
 	//std::cout << "edge: " << edge << std::endl;
+	//std::cout << "I(i): " << i << std::endl;
 	if(edge >= tracker.size())
 	  {
 	    int currNetIndex = tracker.size() - 1;

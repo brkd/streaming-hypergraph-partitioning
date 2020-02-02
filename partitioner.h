@@ -17,6 +17,8 @@ class Partitioner
   //Attributes
   int* sparseMatrix;
   int* sparseMatrixIndex;
+  int* reverse_sparseMatrix;
+  int* reverse_sparseMatrixIndex;
   int* partVec; //pv[i] -> where i resides
   double* scoreArray;   
   
@@ -37,6 +39,7 @@ class Partitioner
   void LDGn2p(int, int, int, double);
   void LDGn2p_i(int, int, int, double);
   void LDGBF(int, int, int, double);
+  void LDGBF2(int, int, int, double);
   void LDGMultiBF();
   
   void vertexOutput(int, int);
@@ -46,6 +49,7 @@ class Partitioner
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
   int BFConnectivity(int, int);
+  int BFConnectivity2(int, int);
  public:
   //Constructors
   Partitioner(std::string);
