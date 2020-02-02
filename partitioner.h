@@ -32,6 +32,7 @@ class Partitioner
   void read_graph(std::string fileName);
   void read_binary_graph(std::string fileName);
   void write_binary_graph(std::string fileName);
+  void read_mtx_and_transform_to_shpbin(std::string fileName);
   
   void LDGp2n(int, int, int, double);
   void LDGn2p(int, int, int, double);

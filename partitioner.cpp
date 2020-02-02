@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <stdio.h>
 
-#define DEBUG
+//#define DEBUG
 #define WATCH
 
 /*
@@ -50,120 +50,90 @@ Partitioner::Partitioner(std::string fileName){
   //Read matrix
   
   std::string mtx_name = fileName + ".mtx";
-  std::string bin_name = fileName + ".bin";
+  std::string bin_name = fileName + ".shpbin";
   const char* bfile = bin_name.c_str();
   
-
   FILE* bp;
   bp = fopen(bfile, "rb");
   
   if(bp == NULL){
-  //if(1){
-    std::ifstream fin(mtx_name);
-    std::string comment;
-    std::getline(fin, comment);
+    this->read_mtx_and_transform_to_shpbin(fileName);
+    this->read_binary_graph(bin_name);
     
-  
-  while(fin.peek() == '%')
-  {    
-    fin.ignore(2048, '\n');
-  }  
-  
-  //Getting net, pin, non-zero counts
-  fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
-  
-  std::cout << "Row count: " << this->edgeCount << " Column count: " << this->vertexCount << " Non-zero count: " << this->nonzeroCount << std::endl;
-  
-  //Init partition matrix
-  this->partVec = new int[this->vertexCount];
-  this->bloomFilter = nullptr;
-  
-  //Init sparse matrix representation
-  this->sparseMatrixIndex = new int[this->vertexCount + 1];
-  sparseMatrixIndex[0] = 0;
-  if(comment.find("symmetric") == std::string::npos){
-    this->sparseMatrix = new int[this->nonzeroCount + 1];
-    this->symmetry = true;
   }
   else{
-    this->sparseMatrix = new int[this->nonzeroCount*2 + 1];
-  }
-  
-  fin.close();
-  this->read_graph(mtx_name);
-  }
-  else{
-    //std::cout << "Not available at the moment" << std::endl;
-    //exit(1);
+    fclose(bp);
     this->read_binary_graph(bin_name);
   }
 }
 
-void Partitioner::read_binary_graph(std::string fileName){
+  
+  void Partitioner::read_binary_graph(std::string fileName){
   const char* fname = fileName.c_str();
   FILE* bp;
   bp = fopen(fname, "r");
-
+  
   int* nov = new int;
+  int* nnet = new int;
+  int* nnz = new int;
   
   fread(nov, sizeof(int), 1, bp);
   this->vertexCount = *nov;
 
-  std::cout << "NOV: " << *nov << std::endl;
-  //std::cout << "nnz: " << *nnz <<std::endl;
-
-  this->sparseMatrixIndex = new int[*nov+1];
-  fread(this->sparseMatrixIndex, sizeof(int), *nov+1, bp);
-
-  std::cout << "LAST: " << sparseMatrixIndex[*nov] << std::endl;
-  //exit(1);
- 
-  this->sparseMatrix = new int[this->sparseMatrixIndex[*nov]];
-  fread(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[*nov], bp);
+  fread(nnet, sizeof(int), 1, bp);
+  this->edgeCount = *nnet;
   
+  fread(nnz, sizeof(int), 1, bp);
+  this-> nonzeroCount = *nnz;
+
   
+#ifdef DEBUG
+  std::cout << "No vertices: " << this->vertexCount << std::endl;
+  std::cout << "No nets: " << this->edgeCount << std::endl;
+  std::cout << "No nonzero: " << this-> nonzeroCount << std::endl;
+#endif
+
+  this->sparseMatrixIndex = new int[*nnet];
+  fread(this->sparseMatrixIndex, sizeof(int), *nnet, bp);
+
+  this->sparseMatrix = new int[*nnz];
+  fread(this->sparseMatrix, sizeof(int), *nnz, bp);
+
   this->partVec = new int[this->vertexCount];
   this->bloomFilter = nullptr;
   
 #ifdef DEBUG
   std::cout << "First indexes of xadj and adj" << std::endl;
-    for(int i = 0; i < 150; i++){
-    std::cout << "i:" << this->sparseMatrixIndex[i] << " " << sparseMatrix[i] << std::endl;
+  for(int i = 0; i < 150; i++){
+    std::cout << "i: " << i  << " " <<this->sparseMatrixIndex[i] << " " << sparseMatrix[i] << std::endl;
   }
 #endif
   
-    fclose(bp);
-    //exit(1);
-}
-
-void Partitioner::write_binary_graph(std::string fileName){
-  const char* fname = fileName.c_str();
-  FILE* bp;
-  bp = fopen(fname, "w");
-
-  std::cout << "This vertex count: " << this->vertexCount << std::endl;
-  
-  fwrite(&this->sparseMatrixIndex[this->vertexCount*2], sizeof(int), 1, bp);
-  fwrite(this->sparseMatrixIndex, sizeof(int), this->edgeCount+1, bp);
-  fwrite(this->sparseMatrix, sizeof(int), this->sparseMatrixIndex[this->edgeCount], bp);
   fclose(bp);
+  //exit(1);
 }
 
-void Partitioner::check_and_write_binary_graph(std::string fileName){
-  fileName += ".bin";
-  const char* bfile = fileName.c_str();
-  FILE* bp;
-  bp = fopen(bfile, "rb");
-  if(bp == NULL){
-    //bp = fopen(bfile, "wb");
-    std::cout << "Writing Binary Graph" << std::endl;
-    this->write_binary_graph(fileName);
-   }
-}
+bool sortbyfirst(const pair<int,int> &a, const pair<int,int> &b) 
+{ 
+  return (a.first < b.first); 
+} 
 
+bool sortbysec(const pair<int,int> &a, const pair<int,int> &b) 
+{ 
+  return (a.second < b.second); 
+} 
 
-void Partitioner::read_graph(std::string fileName){
-    
+void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
+
+  std::cout << "sa" << std::endl;
+  
+  std::string mtx_name = fileName + ".mtx";
+  std::string bin_name = fileName + ".shpbin";
+  const char* bfile = bin_name.c_str();
+
+  int* xadj;
+  int* adj;
+  
   //FIELD//
   bool _real = false;
   bool _integer = false;
@@ -176,9 +146,8 @@ void Partitioner::read_graph(std::string fileName){
   bool _symmetric = false;
   //SYMMETRY//
   
-  
   //Evaluate type
-  std::ifstream fin(fileName);
+  std::ifstream fin(mtx_name);
   std::string comment;
   std::getline(fin, comment);
   std::cout << "Type: " << comment << std::endl;
@@ -216,271 +185,215 @@ void Partitioner::read_graph(std::string fileName){
   {    
     fin.ignore(2048, '\n');
   }  
-  std::getline(fin, comment);//We already acquired that values
-  
-  
+
   int vIndex = 0, row, col, currentColumn = -1;
   float val1;
   float val2;
   int val3;
+
+  int no_row = 0;
+  int no_col = 0;
+  int nnz = 0;
+
+  int vertex, net;
+
+  fin >> no_row >> no_col >> nnz;
+  
+  std::vector<std::pair<int,int>> intermediate;
+  
   if(_general){	
     
-    if(_real){
+    if(_real || _integer){
       
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	    {      
-	      fin >> row >> col >> val1;
-	      this->sparseMatrix[i] = row - 1;
-	      if (col != currentColumn)
-	      {
-	        this->sparseMatrixIndex[vIndex] = i;
-	        currentColumn = col;
-	        vIndex++;
-	      }
-	    }
+      while(!fin.eof())
+	{      
+	  fin >> vertex >> net >> val1;
+	  intermediate.push_back(std::pair<int, int>(vertex-1, net-1));
+	}
     }
     
     if(_integer){
       
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	    {      
-	      fin >> row >> col >> val2;
-	      this->sparseMatrix[i] = row - 1;
-	      if (col != currentColumn)
-	      {
-	        this->sparseMatrixIndex[vIndex] = i;
-	        currentColumn = col;
-	        vIndex++;
-	      }
-	    }  
+      while(!fin.eof())
+	{      
+	  fin >> vertex >> net >> val3;
+	  intermediate.push_back(std::pair<int, int>(vertex-1, net-1));
+	}
+      
     }    
     
     if(_pattern){
-    
-      for(int i = 0; i < this->nonzeroCount; i++)
-	    {            
-	      fin >> row >> col;
-	      this->sparseMatrix[i] = row - 1;
-	      if (col != currentColumn)
-	      {
-	        this->sparseMatrixIndex[vIndex] = i;
-	        currentColumn = col;
-	        vIndex++;
-	      }
-	    }
+      
+      while(!fin.eof())
+	{      
+	  fin >> vertex >> net;
+	  intermediate.push_back(std::pair<int, int>(vertex-1, net-1));
+	}
+      
     }
     
     if(_complex){      
       
-      for(int i = 0; i < this->nonzeroCount + 1; i++)
-	    {      
-	      fin >> row >> col >> val1 >> val2;
-	      this->sparseMatrix[i] = row - 1;
-	      if (col != currentColumn)
-	      {
-	        this->sparseMatrixIndex[vIndex] = i;
-	        currentColumn = col;
-	        vIndex++;
-	      }
-	    }
+      while(!fin.eof())
+	{      
+	  fin >> vertex >> net >> val1 >> val2;
+	  intermediate.push_back(std::pair<int, int>(vertex-1, net-1));
+	}
+      
     }
-  }
+    
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    
+    adj = new int[intermediate.size()];
+    xadj = new int[no_col+1];
+    
+    xadj[0] = 0;
+    int current_net = 0;
+    int xadj_cursor = 1;
+    for(int i = 0; i < intermediate.size(); i++){
+      adj[i] = intermediate[i].first;
+      
+      if(intermediate[i].second != current_net){
+	xadj[xadj_cursor] = i;
+	xadj_cursor++;
+	current_net = intermediate[i].second;
+      }
+    }
+    
+    for(int i = 0; i < 100; i ++){
+      
+      std::cout << "i: " << i << " ||| xadj: " << xadj[i] << " edge: " << adj[i] << std::endl;
+    }
 
-  if(_symmetric){
-    //row->vertex
-    //col->net
+    std::cout << intermediate.size() << " ||| " << nnz+1 << std::endl;
+    std::cout << intermediate[intermediate.size()-1].second << " ||| " << no_col << std::endl;
     
-    std::pair<int,int>* intermediate = new std::pair<int,int>[this->nonzeroCount*2+1]; //also delete that
+    //exit(1);
+    
+  }
   
-    if(_real){
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
-	fin >> row >> col >> val1;
-	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
-	intermediate[i] = std::pair<int, int>(col-1, row-1);
-      }
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-    }
+  if(_symmetric){
     
-    if(_integer){
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
-	fin >> row >> col >> val3;
-	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
-	intermediate[i] = std::pair<int, int>(col-1, row-1);
-      }
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
+    if(_real || _integer){
+      
+      while(!fin.eof())
+	{      
+	  fin >> vertex >> net >> val1;
+	  intermediate.push_back(std::pair<int, int>(vertex-1, net-1));
+	  intermediate.push_back(std::pair<int, int>(net-1, vertex-1));
+	}
     }
     
     if(_pattern){
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
-	fin >> row >> col;
-	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
-	intermediate[i] = std::pair<int, int>(col-1, row-1);
-      }
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-    }
-    
-    if(_complex){
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-      for(int i = 0; i < this->nonzeroCount*2 + 1; i+=2){
-	fin >> row >> col >> val1 >> val2;
-	intermediate[i+1] = std::pair<int, int>(row-1, col-1);
-	intermediate[i] = std::pair<int, int>(col-1, row-1);
-      }
-      //Note that nets and vertexes are changes their order here. Anywhere but here, nets are thought as second.
-    }
-    
-    std::sort(intermediate, intermediate+this->nonzeroCount*2);
 
-#ifdef DEBUG
-    std::cout << "Printing Sorted Symmetry, with replications included: " << std::endl;
-    for(int i = 0; i < 150; i++){
-      std::cout << i << ": " << intermediate[i].first << " " << intermediate[i].second << "\n";
-    }
-#endif
-    
-    int current_col = 0;
-    int net;
-    int vertex;
-    int lose_offset = 0; //This keeps track of number of replications and reduce it to strictly place values in sparseMatrix
-    sparseMatrixIndex[0] = 0;
-    
-    
-    for(int i = 0; i < this->nonzeroCount*2 + 1; i++){
-      net = intermediate[i].first;
-      vertex = intermediate[i].second;
-      
-#ifdef DEBUG
-      if(i < 150)
-	std::cout << "i :" << i << " net: " << net << " vertex: " << vertex << std::endl;
-#endif      
-
-      for(int curr = i+1; curr < this->nonzeroCount*2 +1; curr++){
-	
-	if(net != current_col){
-	  vIndex++;
-	  sparseMatrixIndex[vIndex] = i-lose_offset;
-#ifdef DEBUG
-	  if(i < 150)
-	    std::cout << "Col changed at i: " << i << std::endl;
-#endif
-	  current_col = net;
+      while(!fin.eof())
+	{      
+	  fin >> vertex >> net;
+	  intermediate.push_back(std::pair<int, int>(vertex-1, net-1));
+	  intermediate.push_back(std::pair<int, int>(net-1, vertex-1));	  
 	}
-	
-	if(net != intermediate[curr].first){
-	  this->sparseMatrix[i-lose_offset] = vertex;
-#ifdef DEBUG
-	  if(i < 150)
-	    std::cout << "Added, i: " << i << " lose offset: " << lose_offset << " net: " << vIndex << " vertex: " << vertex <<std::endl;
-#endif
-	  break;	 
-	}
-	
-	if((net == intermediate[curr].first) && (vertex == intermediate[curr].second)){
-	  //std::cout << "Replication!" << std::endl;
-	  lose_offset++;
-	  break;
-	}
-	
-      }
       
     }
-    delete[] intermediate;
-
-    int* strict = new int[sparseMatrixIndex[this->vertexCount-1]+1];
-    int* holder = this->sparseMatrix;
     
-    for(int i = 0; i < sparseMatrixIndex[this->vertexCount-1]; i++){
+    if(_complex){      
       
-      strict[i] = sparseMatrix[i];
+      while(!fin.eof())
+	{      
+	  fin >> vertex >> net >> val1 >> val2;
+	  intermediate.push_back(std::pair<int, int>(vertex-1, net-1));
+	  intermediate.push_back(std::pair<int, int>(net-1, vertex-1));
+	}
+      
     }
+    
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
 
-    strict[this->vertexCount] = 0;
-
-    delete[] this->sparseMatrix;
-    this->sparseMatrix = strict;
-  
-#ifdef DEBUG      
-    for(int in = sparseMatrixIndex[this->vertexCount-1]-1000; in < sparseMatrixIndex[this->vertexCount-1]+1; in++){
-      if(in == this->nonzeroCount*2+1 - lose_offset){
-	std::cout << "Printing last columns of CRS" << std::endl;
-	std::cout << "Last pointers: " << sparseMatrixIndex[this->vertexCount-1] << " " << sparseMatrixIndex[this->vertexCount] << " " << sparseMatrixIndex[this->vertexCount+1] << std::endl;
+    //need vector::erase and remove replicatons BEFORE continuing to adj and xadj because we need the exact size of purged intermediate to write binary files 
+    
+    for(int i = 0; i < intermediate.size(); i++){
+      if((intermediate[i].first == intermediate[i+1].first) && intermediate[i].second == intermediate[i+1].second)
+	intermediate.erase(intermediate.begin()+i);
+      //std::cout << "Deduplicating " << i << "/" << intermediate.size() << std::endl;
+    }
+    
+    adj = new int[intermediate.size()];
+    xadj = new int[no_col+1];
+    
+    xadj[0] = 0;
+    int current_net = 0;
+    int xadj_cursor = 1;
+    
+    for(int i = 0; i < intermediate.size(); i++){
+      
+      if(intermediate[i].first != intermediate[i+1].first ){
+	adj[i] = intermediate[i].first;
+	
+	if(intermediate[i].second != current_net){
+	  xadj[xadj_cursor] = i;
+	  xadj_cursor++;
+	  current_net = intermediate[i].second;
+	}
       }
-      std::cout << "Index: " << in << " val: " << this->sparseMatrix[in] << std::endl;
+    }
+    
+#ifdef DEBUG
+    for(int i = 0; i < 100; i ++){
+      
+      std::cout << "i: " << i << " ||| xadj: " << xadj[i] << " adj: " << adj[i] << std::endl;
     }
 #endif
+    
+    std::cout << intermediate.size() << " ||| " << nnz+1 << std::endl;
+    std::cout << intermediate[intermediate.size()-1].second << " ||| " << no_col << std::endl;
+    std::cout << intermediate[intermediate.size()].second << " ||| " << no_col << std::endl;
+    
+    //exit(1);
+    
   }
   
-
   if(!_general && !_symmetric)
   {
     std::cout << "I believe a problem happened during reading fields of the matrix.." << std::endl;
     exit(1);
   }    
-
-
-  #ifdef DEBUG
-  int debug_size = 300;
-  std::cout << "Sparse Matrix Index: " << std::endl;
   
-  for(int i = 0; i < debug_size/5; i++){
-    std::cout << sparseMatrixIndex[i] << " ";
-  }
+  fin.close();
   
-  std::cout << "\n" << "\n";
+  std::cout << "HERE 9" << std::endl;
+
+  int* no_vertex;
+  no_vertex = &no_row;
+  int* no_nets;
+  no_nets = &intermediate[intermediate.size()-1].second;
+  int np_nz = intermediate.size();
+  int* no_nz;
+  no_nz = &np_nz;
   
-  int curr, next;
-
-  for(int i = 0; i < 25; i++){
-    curr = sparseMatrixIndex[i];
-    next = sparseMatrixIndex[i+1];
-
-    std::cout << "Net " << i << " start: " << curr << " end: " << next <<std::endl;
-    
-    for(int j = curr; j < next; j++){
-      std::cout << sparseMatrix[j] << " ";
-    }
-    
-    std::cout << "\n" << std::endl;
-
-  }
-#endif
+  const char* fname = bin_name.c_str();
+  FILE* bp;
+  bp = fopen(fname, "w");
   
-  this->sparseMatrix[this->nonzeroCount] = this->sparseMatrix[this->nonzeroCount - 1] + 1;
-  this->sparseMatrixIndex[this->vertexCount] = this->nonzeroCount + 1;
-  std::cout << "Matrix integration: DONE!" << std::endl;	
+  
+  std::cout << "No vertex: " << *no_vertex << " No nets: " << *no_nets << " No nz: " << *no_nz << std::endl;
+  
+  fwrite(no_vertex, sizeof(int), 1, bp);
+
+  fwrite(no_nets, sizeof(int), 1, bp);
+  
+  fwrite(no_nz, sizeof(int), 1, bp);
+  
+  fwrite(xadj, sizeof(int), *no_nets, bp);
+  
+  fwrite(adj, sizeof(int), *no_nz, bp);
+  
+  fclose(bp);
+
+  delete[] xadj;
+  delete[] adj;
 }
 
-
-/*
-Partitioner::Partitioner(std::string fileName, int byteSize, int hashCount)
-{
-  //Read matrix
-  
-        std::ifstream fin(fileName);
-	while (fin.peek() == '%') fin.ignore(2048, '\n');
-	fin >> this->edgeCount >> this->vertexCount >> this->nonzeroCount;
-	std::cout << "Edge count: " << this->edgeCount << " Vertex count: " << this->vertexCount << " Nonzero count: " << this->nonzeroCount << std::endl;
-
-	//Init partition matrix
-	this->partVec = new int[this->vertexCount];
-  
-  //Init bloom filter
-  this->bloomFilter = new Bloom<int, int>(byteSize, hashCount);
-	
-	//Init sparse matrix representation
-	this->sparseMatrix = new int[this->nonzeroCount + 1];
-	this->sparseMatrixIndex = new int[this->vertexCount + 1];
-	sparseMatrix[0] = 0;
-	
-	fin.close();
-	
-	//this->read_graph(fileName);
-	
-}
-*/
 
 Partitioner::~Partitioner()
 {
