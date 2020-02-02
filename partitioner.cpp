@@ -10,8 +10,8 @@
 #include <iomanip>
 #include <stdio.h>
 
-#define DEBUG
-#define WATCH
+//#define DEBUG
+//#define WATCH
 
 /*
 int readBinaryGraph(FILE* bp, etype **pxadj, vtype **padj,
@@ -299,14 +299,14 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
 
+#ifdef DEBUG
     std::cout << "AFTER REVERSE SORTING, INTERMEDIATE: " << std::endl;
 
     for(int i = 0; i < 200; i++){
-
       std::cout << "i: " << i << " ||-|| " << intermediate[i].first << " " << intermediate[i].second << std::endl; 
- 
-
     }
+
+#endif
 
     no_vertex = &intermediate[intermediate.size()-1].first;
     reverse_adj = new int[intermediate.size()];
@@ -380,8 +380,7 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
 
-    //need vector::erase and remove replicatons BEFORE continuing to adj and xadj because we need the exact size of purged intermediate to write binary files 
-    
+        
     for(int i = 0; i < intermediate.size(); i++){
       if((intermediate[i].first == intermediate[i+1].first) && intermediate[i].second == intermediate[i+1].second)
 	intermediate.erase(intermediate.begin()+i);
@@ -541,7 +540,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
   else if(algorithm == 4)
   {
     auto start = std::chrono::high_resolution_clock::now();
-    this->LDGBF(partitionCount, slackValue, seed, imbal);
+    this->LDGBF2(partitionCount, slackValue, seed, imbal);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
   }
@@ -718,13 +717,13 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     else
       capacityConstraint = ((double)slackValue) / partitionCount;
 
-    for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+    for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
       {
 	//std::cout << "k: " << k << std::endl;
 	//std::cout << "index[i]: " << sparseMatrixIndex[i] << std::endl;
 	//std::cout << "index[i+1]: " << sparseMatrixIndex[i+1] << std::endl;
 	//std::cout << "index[vertexCount]: " << this->sparseMatrixIndex[this->vertexCount]<< " k: " << k << std::endl;
-	int edge = this->sparseMatrix[k];
+	int edge = this->reverse_sparseMatrix[k];
 	//std::cout << "edge: " << edge << std::endl;
 	//std::cout << "I(i): " << i << std::endl;
 	if(edge >= tracker.size())
@@ -757,9 +756,9 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
     
-    for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+    for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
       {
-	int edge = this->sparseMatrix[k];      
+	int edge = this->reverse_sparseMatrix[k];      
 	if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
 	  netToPartition[tracker[edge]]->push_back(maxIndex);      
       }
@@ -1013,7 +1012,7 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
       
       for (int j = 0; j < partitionCount; j++)
 	{
-	  int connectivity = this->BFConnectivity(j, i);
+	  int connectivity = this->BFConnectivity2(j, i);
 	  //std::cout <<"partition " << j <<  " Conn: " << this->BFConnectivity(j, i) << std::endl;
 	  double partToCapacity = sizeArray[j] / capacityConstraint;
 	  double penalty = 1 - partToCapacity;
@@ -1035,9 +1034,9 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
       scoreArray[i] = maxScore;
       sizeArray[maxIndex] += 1;
       
-      for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+      for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
-	  int edge = this->sparseMatrix[k];
+	  int edge = this->reverse_sparseMatrix[k];
 	  //if (!(this->bloomFilter->contains(edge, maxIndex)))
 	    this->bloomFilter->insert(edge, maxIndex);
 	}
@@ -1204,9 +1203,9 @@ int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<
 int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker)
 {    
   std::vector<int> encounterArray;
-	for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
+	for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
 	{
-	  int edge = this->sparseMatrix[k];
+	  int edge = this->reverse_sparseMatrix[k];
 	  int edgeIndex = tracker[edge];
     
 	  for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)

@@ -1,3 +1,4 @@
+
 #include<bitset>
 
 //int primes[4] = {1129, 2063, 3217, 4093};
