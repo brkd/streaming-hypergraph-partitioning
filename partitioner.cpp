@@ -582,6 +582,8 @@ void Partitioner::RandomPartition(int partitionCount, int seed)
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
 
+  std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
+
   delete[] sizeArray;
 }
 
