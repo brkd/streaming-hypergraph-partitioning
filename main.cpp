@@ -15,34 +15,16 @@ int main(int argc, char** argv) {
     partitionCount = MAXPARTNO;
   }
 
-  double imbal = atof(argv[3]);
-  if(imbal > MAXIMBAL)
-  {
-    std::cout << "Maximum allowed tolerance ratio is " << MAXIMBAL << ", setting tolerance ratio to " << MAXIMBAL << "." << std::endl;
-    imbal = MAXIMBAL;
-  }
     
-  int slackValue = atoi(argv[4]);  
-  std::string fileName = argv[5];		
-  int randomizationCount = atoi(argv[6]);
+  std::string fileName;		
 
   int byteSize;
   int hashCount;
+  int randomizationCount;
   Partitioner* partitioner;  
-  
   
   if(algorithm == 0)
   { 
-    if(argc > 7)
-    {
-      byteSize = atoi(argv[7]);
-      hashCount = atoi(argv[8]);
-      partitioner = new Partitioner(fileName, byteSize, hashCount);
-    }
-    else
-    {
-      std::cout << "Missing info for BF " << std::endl;
-      exit(1);
       fileName = argv[3];
       randomizationCount = atoi(argv[4]);
       Partitioner randomPartitioner(fileName);
@@ -51,8 +33,7 @@ int main(int argc, char** argv) {
     {
       randomPartitioner.RandomPartition(partitionCount, i);   
     }
-  }
-  }
+  }  
   else
   {   
     double imbal = atof(argv[3]);
