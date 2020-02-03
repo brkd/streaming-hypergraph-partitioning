@@ -2,8 +2,9 @@
 #include<bitset>
 
 //int primes[4] = {1129, 2063, 3217, 4093};
+int primes[4] = {1129247, 2063522, 6795919, 8093200};
 //int primes[4] = {11290, 20630, 320017, 390093};
-int primes[16] = {643873, 98507, 181277, 25367, 325231, 340933, 416401, 519371, 647033, 735107, 837461, 917239, 990469, 1060177, 1136411, 1269173};
+//int primes[16] = {643873, 98507, 181277, 2536, 325231, 340933, 416401, 519371, 647033, 735107, 837461, 917239, 990469, 1060177, 1136411, 1269173};
 
 struct ax_b_hash{
 private:
@@ -41,7 +42,7 @@ public:
   
 };
 
-#define NOBITS 8192
+#define NOBITS 8192000
 #define NOHASHES 3
 struct BloomFilter {
 private:
@@ -71,6 +72,7 @@ public:
       if(bits[index] == 0)
 	return false;
     }
+    //std::cout << "val: " << val << " returning true " << std::endl;
     return true;
   }
   

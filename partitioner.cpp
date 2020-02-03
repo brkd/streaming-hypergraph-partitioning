@@ -9,6 +9,8 @@
 //
 #include <iomanip>
 #include <stdio.h>
+//
+#include <omp.h>
 
 //#define DEBUG
 //#define WATCH
@@ -989,10 +991,10 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
 void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double imbal)
 {
   int* sizeArray = new int[partitionCount];
-  BloomFilter* bf[16];// = new BloomFilter[partitionCount];
+  BloomFilter* bf = new BloomFilter[partitionCount];
   
-  for(int i = 0; i < 16; i++){
-    bf[i] = new BloomFilter(4096, i);
+  for(int i = 0; i < partitionCount; i++){
+    bf[i] = BloomFilter(4096, i);
   }
   
   
@@ -1020,7 +1022,8 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
       
       double maxScore = -1.0;
       int maxIndex = -1;
-      
+
+      //#pragma omp parallel for schedule(static,1) num_threads(1)//num_threads(partitionCount)  
       for (int j = 0; j < partitionCount; j++)
 	{
 	  int connectivity = this->BFConnectivity2(bf, j, i);
@@ -1046,7 +1049,7 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
 	}
       //std::cout << "CP2.6" << std::endl;
       partVec[i] = maxIndex;
-      std::cout << "Vertex " << i << " assigned to partition " <<  maxIndex << std::endl;
+      //std::cout << "Vertex " << i << " assigned to partition " <<  maxIndex << std::endl;
       scoreArray[i] = maxScore;
       sizeArray[maxIndex] += 1;
       //std::cout << "CP2.7" << std::endl;
@@ -1057,7 +1060,7 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
 	  int edge = this->reverse_sparseMatrix[k];
 	  //if (!(this->bloomFilter->contains(edge, maxIndex)))
 	  //std::cout << "CP3, maxIndex: " << maxIndex << std::endl;
-	  bf[maxIndex]->insert(edge);
+	  bf[maxIndex].insert(edge);
 	}
       
       currVertexCount++;
@@ -1147,7 +1150,7 @@ void Partitioner::vertexOutput(int algorithm, int seed)
       textName = "N2Pvertex.txt";
   else if(algorithm == 3)
       textName = "N2P_Kvertex.txt";
-  else if(algorithm == 3)
+  else if(algorithm == 4)
       textName = "BFvertex.txt";
     
   std::ofstream outfile;
@@ -1290,18 +1293,20 @@ int Partitioner::BFConnectivity(int partitionID, int vertex)
   return connectivityCount;
 }
 */
-int Partitioner::BFConnectivity2(BloomFilter* bf[], int partitionID, int vertex)
+int Partitioner::BFConnectivity2(BloomFilter* bf, int partitionID, int vertex)
 {
   int connectivityCount = 0;
-  
+
+
   for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
     {
       int val = this->reverse_sparseMatrix[k];
-      if (bf[partitionID]->query(val))
+      if (bf[partitionID].query(val))
 	connectivityCount++;
     }
-  
-  std::cout << "Connectivity: " << connectivityCount << std::endl;
+ 
+
+  //std::cout << "Connectivity: " << connectivityCount << std::endl;
   return connectivityCount;
 }  
 

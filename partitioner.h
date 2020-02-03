@@ -49,7 +49,7 @@ class Partitioner
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
   int BFConnectivity(int, int);
-  int BFConnectivity2(BloomFilter* bf[], int, int);
+  int BFConnectivity2(BloomFilter* bf, int, int);
  public:
   //Constructors
   Partitioner(std::string);
