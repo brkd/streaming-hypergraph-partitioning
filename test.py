@@ -37,18 +37,12 @@ def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_v
 			writer.writerow([algorithm, durations[i], cuts[i], slack_value, imbal, byte_size, hash_count, partition_count, devs[i], size_vecs[i]])
 
 def start_partitioning(algorithm, partition_count, imbal, slack_value, matrix_name, randomization_count, byte_size=-1, hash_count=-1):
-<<<<<<< HEAD
-        args = ("./main", algorithm, partition_count, imbal, slack_value, "Matrices/" + matrix_name.replace(".mtx", ""), randomization_count)
-        popen = subprocess.Popen(args, stdout=subprocess.PIPE)
-        output = popen.stdout.read()
-        write_output(matrix_name, output.decode('utf-8'), algorithm, partition_count, imbal, slack_value, randomization_count, byte_size, hash_count)
-=======
 	args = ("./main", algorithm, partition_count, imbal, slack_value, "/gandalf/data/Hyper/just_mtx/" + matrix_name, randomization_count)
 	popen = subprocess.Popen(args, stdout=subprocess.PIPE)
 	output = popen.stdout.read()
 	write_output(matrix_name, output.decode('utf-8'), algorithm, partition_count, imbal, slack_value, randomization_count, byte_size, hash_count)
->>>>>>> 8e52ff8ee0dbe71cbb8b0ea3a4225e11b6de3e7e
-	
+
+
 if __name__ == "__main__":
 	algorithm = sys.argv[1]
 	partition_count = sys.argv[2]
