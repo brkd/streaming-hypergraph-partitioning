@@ -1130,7 +1130,7 @@ void Partitioner::vertexOutput(int algorithm, int seed)
       textName = "N2Pvertex.txt";
   else if(algorithm == 3)
       textName = "N2P_Kvertex.txt";
-  else if(algorithm == 3)
+  else if(algorithm == 4444)
       textName = "BFvertex.txt";
     
   std::ofstream outfile;
