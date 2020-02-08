@@ -49,14 +49,14 @@ class Partitioner
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
   int BFConnectivity(int, int);
-  int BFConnectivity2(int, int);
+  int BFConnectivity2(BloomFilter* bf, int, int);
  public:
   //Constructors
   Partitioner(std::string);
   Partitioner(std::string name, int a, int b):Partitioner(name)
   {
     //this->bloomFilter = new Bloom<int, int>(a, b);
-    this->bloomFilter = new BloomFilter(a);
+    //this->bloomFilter = new BloomFilter(a, 0);
   }
   void check_and_write_binary_graph(std::string fileName);
   
