@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <cmath>
 #include <chrono>
-//
+
 #include <iomanip>
 #include <stdio.h>
-//
+
 #include <omp.h>
 
 //#define DEBUG
@@ -111,8 +111,7 @@ Partitioner::Partitioner(std::string fileName){
 
   //
 
-  this->partVec = new int[this->vertexCount];
-  this->bloomFilter = nullptr;
+  this->partVec = new int[this->vertexCount];  
   
 #ifdef DEBUG
   std::cout << "First indexes of xadj and adj" << std::endl;
@@ -510,9 +509,6 @@ Partitioner::~Partitioner()
   delete[] this->scoreArray;
   delete[] this->sparseMatrix;
   delete[] this->sparseMatrixIndex;
-  
-  if(this->bloomFilter)
-    delete this->bloomFilter;
 }
 
 void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal)
@@ -520,36 +516,43 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
   std::cout << "Started partitioning" << std::endl;
   //Partition
   if(algorithm == 1)
-  {
-    auto start = std::chrono::high_resolution_clock::now();
-    this->LDGp2n(partitionCount, slackValue, seed, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
-  }
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LDGp2n(partitionCount, slackValue, seed, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    }
   else if(algorithm == 2)
-  {
-    auto start = std::chrono::high_resolution_clock::now();
-    this->LDGn2p(partitionCount, slackValue, seed, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
-  }
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LDGn2p(partitionCount, slackValue, seed, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    }
   else if(algorithm == 3)
-  {
-    auto start = std::chrono::high_resolution_clock::now();
-    this->LDGn2p_i(partitionCount, slackValue, seed, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
-  }
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LDGn2p_i(partitionCount, slackValue, seed, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    }
   else if(algorithm == 4)
-  {
-    auto start = std::chrono::high_resolution_clock::now();
-    this->LDGBF2(partitionCount, slackValue, seed, imbal);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
-  }
-  
-  //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
-  std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LDGBF(partitionCount, slackValue, seed, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    }
+  else if(algorithm == 5)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LDGBF2(partitionCount, slackValue, seed, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    }
+    
+    //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
+    std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
   this->vertexOutput(algorithm, seed);
   //compute cut and report  
 }
@@ -559,34 +562,34 @@ void Partitioner::RandomPartition(int partitionCount, int seed)
 {
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
-  {
-    sizeArray[i] = 0;
-  }
-    
+    {
+      sizeArray[i] = 0;
+    }
+  
   std::default_random_engine generator;
   std::uniform_int_distribution<int> distribution(0, partitionCount - 1);
   
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
-  {
-    readOrder.push_back(i);
-  }
+    {
+      readOrder.push_back(i);
+    }
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
   for (int i : readOrder)
-  {
-    int partition = distribution(generator);
-    sizeArray[partition] += 1;
-    partVec[i] = partition;
-  }
+    {
+      int partition = distribution(generator);
+      sizeArray[partition] += 1;
+      partVec[i] = partition;
+    }
   
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
-
+  
   std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
-
+  
   delete[] sizeArray;
 }
 
@@ -595,17 +598,17 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
 {
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
-  {
-    sizeArray[i] = 0;
-    //std::cout << "SIZE ARRAY[i]:" << sizeArray[i] << std::endl;
-  }
+    {
+      sizeArray[i] = 0;
+      //std::cout << "SIZE ARRAY[i]:" << sizeArray[i] << std::endl;
+    }
   
   //Generate random read order
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
-  {
-    readOrder.push_back(i);
-  }
+    {
+      readOrder.push_back(i);
+    }
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
@@ -616,53 +619,53 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
   double capacityConstraint;
   int currVertexCount = 0;
   for (int i : readOrder)
-  {
-    if((imbal*currVertexCount) >= slackValue)
-      capacityConstraint = (imbal*currVertexCount) / partitionCount;
-    else
-      capacityConstraint = ((double)slackValue) / partitionCount;
-    double maxScore = -1.0;
-    int maxIndex = -1;
-    for (int j = 0; j < partitionCount; j++)
     {
-	    int connectivity = this->p2nConnectivity(j, i, partitionToNet);
-	    //int connectivity = 0;
-	    //std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
-	    double partOverCapacity = sizeArray[j] / capacityConstraint;
-	    double penalty = 1 - partOverCapacity;
-	    double score = penalty * connectivity;
-	    //std::cout << "sizearray[j]: " << sizeArray[j] << " poc: " << partOverCapacity << " penalty: " << penalty << " score: " << score << std::endl;
-	    if (score > maxScore)
+      if((imbal*currVertexCount) >= slackValue)
+	capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      else
+	capacityConstraint = ((double)slackValue) / partitionCount;
+      double maxScore = -1.0;
+      int maxIndex = -1;
+      for (int j = 0; j < partitionCount; j++)
+	{
+	  int connectivity = this->p2nConnectivity(j, i, partitionToNet);
+	  //int connectivity = 0;
+	  //std::cout <<  "Partition " << j << " connectivity: " << connectivity << std::endl;
+	  double partOverCapacity = sizeArray[j] / capacityConstraint;
+	  double penalty = 1 - partOverCapacity;
+	  double score = penalty * connectivity;
+	  //std::cout << "sizearray[j]: " << sizeArray[j] << " poc: " << partOverCapacity << " penalty: " << penalty << " score: " << score << std::endl;
+	  if (score > maxScore)
 	    {
 	      maxScore = score;
 	      maxIndex = j;
 	    }
-	    else if (score == maxScore)
+	  else if (score == maxScore)
 	    {
 	      if (sizeArray[j] < sizeArray[maxIndex])
-	      {
-		      maxIndex = j;
-	      }
+		{
+		  maxIndex = j;
+		}
 	    }
-    }
-    scoreArray[i] = maxScore;
-    partVec[i] = maxIndex;
-    sizeArray[maxIndex] += 1;
-    int maxIndexSize = partitionToNet[maxIndex].size() - 1;
-    
-    for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
-	  {
-	    if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
-         partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
-	  }
-    currVertexCount++;
-    
+	}
+      scoreArray[i] = maxScore;
+      partVec[i] = maxIndex;
+      sizeArray[maxIndex] += 1;
+      int maxIndexSize = partitionToNet[maxIndex].size() - 1;
+      
+      for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+	{
+	  if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
+	    partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
+	}
+      currVertexCount++;
+      
 #ifdef WATCH
-    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
-    std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
 #endif
-    
-  }
+      
+    }
   
   std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
@@ -672,7 +675,7 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
-
+  
   delete[] sizeArray;
 }
 
@@ -684,29 +687,29 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   bool* markerArray = new bool[partitionCount];
   
   for (int i = 0; i < partitionCount; i++)
-  {
-    sizeArray[i] = 0;
-    indexArray[i] = -1;
-    markerArray[i] = false;
-  }
+    {
+      sizeArray[i] = 0;
+      indexArray[i] = -1;
+      markerArray[i] = false;
+    }
   
   std::vector<int> readOrder;
   //THIS LOOKS LIKE ITS CORRECT BUT ITS NOT//  
   /*for(int i = 0; i < sparseMatrixIndex[this->vertexCount]; i++){
-    //std::cout << "i: " << i <<" sparseMatrixIndex[vertexCount]: " << sparseMatrixIndex[this->vertexCount] << " vertexCount: " << this->vertexCount  << " ";
-    //std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
+  //std::cout << "i: " << i <<" sparseMatrixIndex[vertexCount]: " << sparseMatrixIndex[this->vertexCount] << " vertexCount: " << this->vertexCount  << " ";
+  //std::cout << "spsM[" <<i <<"]: "<< sparseMatrix[i] << std::endl;
   }*/
-
+  
   /*
-  for(int i = 0; i < this->vertexCount; i++){
+    for(int i = 0; i < this->vertexCount; i++){
     std::cout << "sparseMatrixIndex[" << i << "]: " << this->sparseMatrixIndex[i] << std::endl;
-  }
+    }
   */
-
+  
   for (int i = 0; i < this->vertexCount; i++)
-  {
-    readOrder.push_back(i);
-  }
+    {
+      readOrder.push_back(i);
+    }
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
@@ -714,22 +717,16 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   std::vector<int> tracker(10000, -1);
   double capacityConstraint;
   int currVertexCount = 0;
-
+  
   for (int i : readOrder) {
- 
+    
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
       capacityConstraint = ((double)slackValue) / partitionCount;
     for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
       {
-	//std::cout << "k: " << k << std::endl;
-	//std::cout << "index[i]: " << sparseMatrixIndex[i] << std::endl;
-	//std::cout << "index[i+1]: " << sparseMatrixIndex[i+1] << std::endl;
-	//std::cout << "index[vertexCount]: " << this->sparseMatrixIndex[this->vertexCount]<< " k: " << k << std::endl;
 	int edge = this->reverse_sparseMatrix[k];
-	//std::cout << "edge: " << edge << std::endl;
-	//std::cout << "I(i): " << i << std::endl;
 	if(edge >= tracker.size())
 	  {
 	    int currNetIndex = tracker.size() - 1;
@@ -745,7 +742,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
 		    tracker[j] = n2pSize - 1;    	      
 		  }            
 	      }
-      }
+	  }
 	if (tracker[edge] == -1)
 	  {
 	    std::vector<int>* newEdge = new std::vector<int>();
@@ -785,7 +782,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
-    
+  
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
@@ -903,20 +900,22 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   delete[] markerArray;
 }
 
-/*
-  void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imbal)
-  {
+
+void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imbal)
+{
+  Bloom<int, int>* bloomFilter = new Bloom<int, int>(this->byteSize, this->hashCount);
+  
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
-  {
-  sizeArray[i] = 0;
-  }
+    {
+      sizeArray[i] = 0;
+    }
   
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
-  {
-  readOrder.push_back(i);
-  }
+    {
+      readOrder.push_back(i);
+    }
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
   
@@ -934,8 +933,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
       
       for (int j = 0; j < partitionCount; j++)
 	{
-	  int connectivity = this->BFConnectivity(j, i);
-	  //std::cout <<"partition " << j <<  " Conn: " << this->BFConnectivity(j, i) << std::endl;
+	  int connectivity = this->BFConnectivity(bloomFilter, j, i);
 	  double partToCapacity = sizeArray[j] / capacityConstraint;
 	  double penalty = 1 - partToCapacity;
 	  double score = penalty * connectivity;
@@ -956,11 +954,10 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
       scoreArray[i] = maxScore;
       sizeArray[maxIndex] += 1;
       
-      for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+      for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
-	  int edge = this->sparseMatrix[k];
-	  //if (!(this->bloomFilter->contains(edge, maxIndex)))
-	    this->bloomFilter->insert(edge, maxIndex);
+	  int edge = this->reverse_sparseMatrix[k];
+	  bloomFilter->insert(edge, maxIndex);
 	}
       
       currVertexCount++;
@@ -969,11 +966,11 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
       std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
       std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
 #endif
-
+      
       
       
     }
-
+  
   std::cout << std::endl;
   
   std::cout << "******PART SIZES*******" << std::endl;
@@ -984,7 +981,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   
   delete[] sizeArray;
 }
-*/
+
 
 void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double imbal)
 {
@@ -1020,18 +1017,12 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
       
       double maxScore = -1.0;
       int maxIndex = -1;
-
-      //#pragma omp parallel for schedule(static,1) num_threads(1)//num_threads(partitionCount)  
       for (int j = 0; j < partitionCount; j++)
 	{
 	  int connectivity = this->BFConnectivity2(bf, j, i);
-	  //std::cout << "CP2, cconstraint: " << capacityConstraint << std::endl;
-	  //std::cout <<"partition " << j <<  " Conn: " << this->BFConnectivity(j, i) << std::endl;
 	  double partToCapacity = sizeArray[j] / capacityConstraint;
 	  double penalty = 1 - partToCapacity;
 	  double score = penalty * connectivity;
-	  //std::cout << "CP2.5, score: " << score << " maxScore: " << maxScore << std::endl;
-
 	  if (score > maxScore)
 	    {
 	      maxScore = score;
@@ -1045,22 +1036,15 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
 		}
 	    }
 	}
-      //std::cout << "CP2.6" << std::endl;
       partVec[i] = maxIndex;
-      //std::cout << "Vertex " << i << " assigned to partition " <<  maxIndex << std::endl;
       scoreArray[i] = maxScore;
       sizeArray[maxIndex] += 1;
-      //std::cout << "CP2.7" << std::endl;
-
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
-	  //std::cout << "CP2.8" << std::endl;
-	  int edge = this->reverse_sparseMatrix[k];
-	  //if (!(this->bloomFilter->contains(edge, maxIndex)))
-	  //std::cout << "CP3, maxIndex: " << maxIndex << std::endl;
+       	  int edge = this->reverse_sparseMatrix[k];
 	  bf[maxIndex].insert(edge);
 	}
-      
+
       currVertexCount++;
       
 #ifdef WATCH
@@ -1079,7 +1063,8 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
   }
-  
+
+  delete[] bf;
   delete[] sizeArray;
 }
 
@@ -1141,31 +1126,33 @@ void Partitioner::LDGMultiBF()
 void Partitioner::vertexOutput(int algorithm, int seed)
 {
   string textName;
-
+  
   if(algorithm == 1)
-      textName = "P2Nvertex.txt";
+    textName = "P2Nvertex.txt";
   else if(algorithm == 2)
-      textName = "N2Pvertex.txt";
+    textName = "N2Pvertex.txt";
   else if(algorithm == 3)
-      textName = "N2P_Kvertex.txt";
+    textName = "N2P_Kvertex.txt";
   else if(algorithm == 4)
-      textName = "BFvertex.txt";
+    textName = "BFvertex.txt";
+  else if(algorithm == 5)
+    textName = "BF2vertex.txt";
     
   std::ofstream outfile;
   outfile.open(textName, std::ios_base::app);
-
+  
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
-  {
-    readOrder.push_back(i);
-  }
+    {
+      readOrder.push_back(i);
+    }
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
-
+  
   for (int i : readOrder)
-  {
-        outfile << i << "," << partVec[i] << "," << scoreArray[i] << "\n";
-  }
+    {
+      outfile << i << "," << partVec[i] << "," << scoreArray[i] << "\n";
+    }
   outfile.close();
 }
 
@@ -1189,7 +1176,7 @@ int Partitioner::calculateCuts(int partitionCount)
 }
 
 //Private methods
- 
+
 int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet)
 {
   int connectivityCount = 0;		
@@ -1202,48 +1189,48 @@ int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<
 }
 
 
-  ///Manual connectivity
-  /*
- int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet){
-   
-   int connectivityCount = 1;
-     
-   for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++){//For all edges vertex connected
-       int net = this->sparseMatrix[k];
-       int vec_size = partitionToNet[partitionID].size();
-       for(int n = 0; n < vec_size; n++){ //Check if partition have that net
--	 if(partitionToNet[partitionID][n] == net)
-	   connectivityCount++;
-       }
-     }
-   return connectivityCount;
- }
-  */
+///Manual connectivity
+/*
+  int Partitioner::p2nConnectivity(int partitionID, int vertex, const std::vector<std::vector<int>>& partitionToNet){
+  
+  int connectivityCount = 1;
+  
+  for(int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++){//For all edges vertex connected
+  int net = this->sparseMatrix[k];
+  int vec_size = partitionToNet[partitionID].size();
+  for(int n = 0; n < vec_size; n++){ //Check if partition have that net
+  -	 if(partitionToNet[partitionID][n] == net)
+  connectivityCount++;
+  }
+  }
+  return connectivityCount;
+  }
+*/
 
 int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArray, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker)
 {    
   std::vector<int> encounterArray;
   for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
-  {
-    int edge = this->reverse_sparseMatrix[k];
-    int edgeIndex = tracker[edge];
-    
-    for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
-      {
-	int part = netToPartition[edgeIndex]->at(i);
-	if (markerArray[part])
-	  {       
-	    encounterArray[indexArray[part]] += 1;        
-	  }		    
-	else
-	  {
-	    encounterArray.push_back(1);
-	    indexArray[part] = encounterArray.size() - 1;
-	    markerArray[part] = true;
-	  }
-      }
-    
-  }
+    {
+      int edge = this->reverse_sparseMatrix[k];
+      int edgeIndex = tracker[edge];
+      
+      for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
+	{
+	  int part = netToPartition[edgeIndex]->at(i);
+	  if (markerArray[part])
+	    {       
+	      encounterArray[indexArray[part]] += 1;        
+	    }		    
+	  else
+	    {
+	      encounterArray.push_back(1);
+	      indexArray[part] = encounterArray.size() - 1;
+	      markerArray[part] = true;
+	    }
+	}
+      
+    }
   double maxScore = -1.0;
   int maxIndex = -1;
   for (int i = 0; i < partitionCount; i++)
@@ -1275,34 +1262,30 @@ int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstra
   this->scoreArray[vertex] = maxScore;
   return maxIndex;
 }
-/*
-int Partitioner::BFConnectivity(int partitionID, int vertex)
+
+int Partitioner::BFConnectivity(Bloom<int, int>* bloomFilter, int partitionID, int vertex)
 {
   int connectivityCount = 0;
-  for (int k = this->sparseMatrixIndex[vertex]; k < this->sparseMatrixIndex[vertex + 1]; k++)
+  for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
     {
-      int edge = this->sparseMatrix[k];
-      if ((this->bloomFilter)->query(edge, partitionID))
+      int edge = this->reverse_sparseMatrix[k];
+      if (bloomFilter->contains(edge, partitionID))
 	connectivityCount++;
-	}
+    }
   
   return connectivityCount;
 }
-*/
+
 int Partitioner::BFConnectivity2(BloomFilter* bf, int partitionID, int vertex)
 {
   int connectivityCount = 0;
-
-
   for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
     {
       int val = this->reverse_sparseMatrix[k];
       if (bf[partitionID].query(val))
 	connectivityCount++;
     }
- 
-
-  //std::cout << "Connectivity: " << connectivityCount << std::endl;
+  
   return connectivityCount;
 }  
 
@@ -1336,5 +1319,7 @@ int Partitioner::calculateCuts2(int partitionCount)
 	arr[b] = 0;
       }
     }
+  
+  delete[] arr;
   return cuts;
 }
