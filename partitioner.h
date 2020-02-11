@@ -38,7 +38,7 @@ class Partitioner
   void LDGn2p(int, int, int, double);
   void LDGn2p_i(int, int, int, double);
   void LDGBF(int, int, int, double);
-  void LDGBF2(int, int, int, double);
+  void LDGBF2(int, int, int, double, int, int);
   void LDGMultiBF();
   
   void vertexOutput(int, int);

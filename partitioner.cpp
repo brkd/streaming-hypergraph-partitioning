@@ -546,7 +546,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
   else if(algorithm == 5)
     {
       auto start = std::chrono::high_resolution_clock::now();
-      this->LDGBF2(partitionCount, slackValue, seed, imbal);
+      this->LDGBF2(partitionCount, slackValue, seed, imbal, byteSize, hashCount);
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
     }
@@ -903,7 +903,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
 
 void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imbal)
 {
-  Bloom<int, int>* bloomFilter = new Bloom<int, int>(this->byteSize, this->hashCount);
+  //Bloom<int, int>* bloomFilter = new Bloom<int, int>(this->byteSize, this->hashCount);
   
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
@@ -983,13 +983,13 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
 }
 
 
-void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double imbal, int byteSize, int hashCount)
 {
   int* sizeArray = new int[partitionCount];
   BloomFilter* bf = new BloomFilter[partitionCount];
   
   for(int i = 0; i < partitionCount; i++){
-    bf[i] = BloomFilter(4096, i);
+    bf[i] = BloomFilter(byteSize*8, hashCount, i);
   }
   
   
