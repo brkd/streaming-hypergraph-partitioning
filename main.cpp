@@ -3,7 +3,7 @@
 int main(int argc, char** argv) {
   int algorithm = atoi(argv[1]);
 
-  if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4 && algorithm != 5) {
+  if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4 && algorithm != 5 && algorithm != 6) {
     std::cout << "wrong algorithm" << endl;
     exit(1);
   }
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     int hashCount;
     Partitioner* partitioner;  
     
-    if(algorithm == 4 || algorithm == 5)
+    if(algorithm == 4 || algorithm == 5 || algorithm == 6)
     { 
       if(argc > 8)
       {

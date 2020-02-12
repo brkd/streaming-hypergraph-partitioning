@@ -3,6 +3,7 @@
 
 #include "bloomclass.h"
 #include "bf_2.hpp"
+#include "bf_3.hpp"
 #include <vector>
 #include <string>
 
@@ -39,6 +40,7 @@ class Partitioner
   void LDGn2p_i(int, int, int, double);
   void LDGBF(int, int, int, double);
   void LDGBF2(int, int, int, double, int, int);
+  void LDGBF3(int, int, int, double, int, int);
   void LDGMultiBF();
   
   void vertexOutput(int, int);
@@ -49,6 +51,7 @@ class Partitioner
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
   int BFConnectivity(Bloom<int, int>*, int, int);
   int BFConnectivity2(BloomFilter* bf, int, int);
+  int BFConnectivity3(BloomFilter_OT* bf, int, int);
  public:
   //Constructors
   Partitioner(std::string);

@@ -550,6 +550,13 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
     }
+  else if(algorithm == 6)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LDGBF3(partitionCount, slackValue, seed, imbal, byteSize, hashCount);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    }
     
     //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
     std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
@@ -903,7 +910,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
 
 void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imbal)
 {
-  //Bloom<int, int>* bloomFilter = new Bloom<int, int>(this->byteSize, this->hashCount);
+  Bloom<int, int>* bloomFilter = new Bloom<int, int>(this->byteSize, this->hashCount);
   
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
@@ -1065,6 +1072,89 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
   }
 
   delete[] bf;
+  delete[] sizeArray;
+}
+
+void Partitioner::LDGBF3(int partitionCount, int slackValue, int seed, double imbal, int byteSize, int hashCount)
+{
+  //Bloom<int, int>* bloomFilter = new Bloom<int, int>(this->byteSize, this->hashCount);
+  
+  BloomFilter_OT* bf = new BloomFilter_OT(byteSize*8, hashCount, 5);
+  
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+    }
+  
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+    {
+      readOrder.push_back(i);
+    }
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  
+  double capacityConstraint;
+  int currVertexCount = 0;
+  for (int i : readOrder)
+    {
+      if((imbal*currVertexCount) >= slackValue)
+	capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      else
+	capacityConstraint = ((double)slackValue) / partitionCount;
+      
+      double maxScore = -1.0;
+      int maxIndex = -1;
+      
+      for (int j = 0; j < partitionCount; j++)
+	{
+	  int connectivity = this->BFConnectivity3(bf, j, i);
+	  double partToCapacity = sizeArray[j] / capacityConstraint;
+	  double penalty = 1 - partToCapacity;
+	  double score = penalty * connectivity;
+	  if (score > maxScore)
+	    {
+	      maxScore = score;
+	      maxIndex = j;
+	    }
+	  else if (score == maxScore)
+	    {
+	      if (sizeArray[j] < sizeArray[maxIndex])
+		{
+		  maxIndex = j;
+		}
+	    }
+	}
+      partVec[i] = maxIndex;
+      scoreArray[i] = maxScore;
+      sizeArray[maxIndex] += 1;
+      
+      for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
+	{
+	  int edge = this->reverse_sparseMatrix[k];
+	  bf->insert(edge, maxIndex);
+	}
+      
+      currVertexCount++;
+      
+#ifdef WATCH
+      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+      
+      
+      
+    }
+  
+  std::cout << std::endl;
+  
+  std::cout << "******PART SIZES*******" << std::endl;
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  }
+  
   delete[] sizeArray;
 }
 
@@ -1283,6 +1373,19 @@ int Partitioner::BFConnectivity2(BloomFilter* bf, int partitionID, int vertex)
     {
       int val = this->reverse_sparseMatrix[k];
       if (bf[partitionID].query(val))
+	connectivityCount++;
+    }
+  
+  return connectivityCount;
+}
+
+int Partitioner::BFConnectivity3(BloomFilter_OT* bloomFilter, int partitionID, int vertex)
+{
+  int connectivityCount = 0;
+  for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
+    {
+      int edge = this->reverse_sparseMatrix[k];
+      if (bloomFilter->query(edge, partitionID))
 	connectivityCount++;
     }
   
