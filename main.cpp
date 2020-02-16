@@ -63,6 +63,10 @@ int main(int argc, char** argv) {
 	  hashCount = atoi(argv[8]);
 	  num_layer = atoi(argv[9]);
 	  mlbf* first = new mlbf(num_layer, partitionCount, hashCount);
+	  std::cout << "sa2" << std::endl;
+	  first->insert(4, 13);
+	  std::cout << "sa3" << std::endl;
+	  exit(1);
 	}
 
 	if(argc > 8)

@@ -68,7 +68,7 @@ public:
     a = 712 + bf_id + num*322;
     b = 1909 + bf_id + num*4043;
 
-    std::cout << "num: " << num << " size: " << csize <<std::endl;
+    //std::cout << "num: " << num << " size: " << csize <<std::endl;
     
     size = csize;
     
@@ -89,7 +89,7 @@ public:
     }
     //this->p = csize-1;
     
-    std::cout << "hash_no: " << num << " p is: " << p << std::endl;
+    //std::cout << "hash_no: " << num << " p is: " << p << std::endl;
     //std::cout << "a: " << a << " b: " << b << std::endl;
     //delete[] OTPrimes;
   }
