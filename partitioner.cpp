@@ -66,7 +66,12 @@ Partitioner::Partitioner(std::string fileName){
     fclose(bp);
     this->read_binary_graph(bin_name);
   }
-  this->scoreArray = new double[this->vertexCount];
+  this->cutArray = new int[this->vertexCount];
+  this->partVec = new int[this->vertexCount];
+  for(int i = 0; i < vertexCount; i++)
+    {
+      partVec[i] = -1;
+    }
 }
 
   
@@ -111,7 +116,6 @@ Partitioner::Partitioner(std::string fileName){
 
   //
 
-  this->partVec = new int[this->vertexCount];  
   
 #ifdef DEBUG
   std::cout << "First indexes of xadj and adj" << std::endl;
@@ -506,7 +510,7 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 Partitioner::~Partitioner()
 {
   delete[] this->partVec;
-  delete[] this->scoreArray;
+  delete[] this->cutArray;
   delete[] this->sparseMatrix;
   delete[] this->sparseMatrixIndex;
 }
@@ -557,10 +561,11 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
     }
-    
-    //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
-    std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
+  
+  //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
+  std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
   this->vertexOutput(algorithm, seed);
+
   //compute cut and report  
 }
 
@@ -655,7 +660,6 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
 		}
 	    }
 	}
-      scoreArray[i] = maxScore;
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
       int maxIndexSize = partitionToNet[maxIndex].size() - 1;
@@ -762,7 +766,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
-    
+    calculateCuts3(partitionCount, i);
     for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
       {
 	int edge = this->reverse_sparseMatrix[k];      
@@ -793,6 +797,11 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
+
+  for(int i : readOrder)
+    {
+      std::cout << "Vertex: " << i << " Cut: " << cutArray[i] << std::endl;
+    }
   
   delete[] sizeArray;
   delete[] indexArray;
@@ -958,8 +967,8 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
 	    }
 	}
       partVec[i] = maxIndex;
-      scoreArray[i] = maxScore;
       sizeArray[maxIndex] += 1;
+      calculateCuts3(partitionCount, i);
       
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
@@ -1044,7 +1053,6 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
 	    }
 	}
       partVec[i] = maxIndex;
-      scoreArray[i] = maxScore;
       sizeArray[maxIndex] += 1;
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
@@ -1127,7 +1135,6 @@ void Partitioner::LDGBF3(int partitionCount, int slackValue, int seed, double im
 	    }
 	}
       partVec[i] = maxIndex;
-      scoreArray[i] = maxScore;
       sizeArray[maxIndex] += 1;
       
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
@@ -1238,10 +1245,11 @@ void Partitioner::vertexOutput(int algorithm, int seed)
     }
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
-  
+
+  int cur_vertex = 0;
   for (int i : readOrder)
     {
-      outfile << i << "," << partVec[i] << "," << scoreArray[i] << "\n";
+      outfile << cur_vertex++ << "," << this->partVec[i] << "," << this->cutArray[i] << "\n";
     }
   outfile.close();
 }
@@ -1349,7 +1357,6 @@ int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstra
 	}
       
     }
-  this->scoreArray[vertex] = maxScore;
   return maxIndex;
 }
 
@@ -1425,4 +1432,49 @@ int Partitioner::calculateCuts2(int partitionCount)
   
   delete[] arr;
   return cuts;
+}
+
+void Partitioner::calculateCuts3(int partitionCount, int vertex)
+{
+  int cuts = 0;
+  bool* arr = new bool[partitionCount];
+
+  for(int b = 0; b < partitionCount; b++)
+    {
+      arr[b] = false;
+    }
+
+  for(int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
+    {
+      int net = reverse_sparseMatrix[k];
+      int cut = 0;
+      
+      for(int j = this->sparseMatrixIndex[net]; j < this->sparseMatrixIndex[net + 1]; j++)
+	{
+	  int new_vertex = sparseMatrix[j];
+	  if(partVec[new_vertex] == -1)
+	    {
+	      continue;
+	    }
+	  else
+	    {
+	      int part = this->partVec[new_vertex];
+	      arr[part] = true;
+	    }
+	}
+
+      for(int b = 0; b < partitionCount; b++)
+	{
+	  if(arr[b])
+	    cut++;
+	}
+      if(cut != 0)
+	cuts += cut - 1;
+      for(int b = 0; b < partitionCount; b++)
+	{
+	  arr[b] = false;
+	}
+    }  
+  delete[] arr;
+  this->cutArray[vertex] = cuts;
 }

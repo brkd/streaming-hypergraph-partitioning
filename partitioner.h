@@ -21,7 +21,7 @@ class Partitioner
   int* reverse_sparseMatrix;
   int* reverse_sparseMatrixIndex;
   int* partVec; //pv[i] -> where i resides
-  double* scoreArray;
+  int* cutArray;
   
   int partitionCount;
   int vertexCount;
@@ -46,6 +46,7 @@ class Partitioner
   void vertexOutput(int, int);
   int calculateCuts(int);
   int calculateCuts2(int);
+  void calculateCuts3(int, int);
 
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
