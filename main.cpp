@@ -3,7 +3,7 @@
 int main(int argc, char** argv) {
   int algorithm = atoi(argv[1]);
 
-  if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4 && algorithm != 5 && algorithm != 6) {
+  if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4 && algorithm != 5 && algorithm != 6 && algorithm != 7) {
     std::cout << "wrong algorithm" << endl;
     exit(1);
   }
@@ -21,7 +21,11 @@ int main(int argc, char** argv) {
   int byteSize;
   int hashCount;
   int randomizationCount;
+  int num_layer;
   Partitioner* partitioner;  
+
+
+  
   
   if(algorithm == 0)
   { 
@@ -51,14 +55,23 @@ int main(int argc, char** argv) {
     int hashCount;
     Partitioner* partitioner;  
     
-    if(algorithm == 4 || algorithm == 5 || algorithm == 6)
-    { 
-      if(argc > 8)
-      {
-        byteSize = atoi(argv[7]);
-        hashCount = atoi(argv[8]);
-        partitioner = new Partitioner(fileName, byteSize, hashCount);
-      }
+    if(algorithm == 4 || algorithm == 5 || algorithm == 6 || algorithm == 7)
+      { 
+	
+	if(algorithm == 7){
+	  byteSize = atoi(argv[7]);
+	  hashCount = atoi(argv[8]);
+	  num_layer = atoi(argv[9]);
+	  mlbf* first = new mlbf(num_layer, partitionCount, hashCount);
+	}
+
+	if(argc > 8)
+	  {
+	    byteSize = atoi(argv[7]);
+	    hashCount = atoi(argv[8]);
+	    partitioner = new Partitioner(fileName, byteSize, hashCount);
+	  }
+	
       else
       {
 	std::cout << "Missing info for BF " << std::endl;

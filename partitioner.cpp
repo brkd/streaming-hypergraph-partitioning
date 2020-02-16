@@ -760,6 +760,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
 	  }
       }
     int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
+    //std::cout << "Vertex: " << i << " cuts: " << calculateCuts2(partitionCount) << std::endl;
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
     
@@ -1359,8 +1360,9 @@ int Partitioner::BFConnectivity(Bloom<int, int>* bloomFilter, int partitionID, i
   for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
     {
       int edge = this->reverse_sparseMatrix[k];
-      if (bloomFilter->contains(edge, partitionID))
+      if (bloomFilter->contains(edge, partitionID)){
 	connectivityCount++;
+      }
     }
   
   return connectivityCount;

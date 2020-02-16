@@ -5,6 +5,53 @@
 ////////int primes[4] = {1129247, 3063522, 5752225, 8191999};
 //int OTprimes[29] = {11293, 301363, 54752, 8191, 23063, 531752, 845191,14555129, 30454563, 575211, 81191, 13063, 75211, 81191,132129, 3354063, 545752, 448191, 434063, 55752, 8542191,112900, 3063, 22522, 4319121, 13063, 57521, 8191};
 
+//PRIME//
+
+bool isPrime(int n)  
+{  
+  // Corner cases  
+  if (n <= 1)  return false;  
+  if (n <= 3)  return true;  
+    
+  // This is checked so that we can skip   
+  // middle five numbers in below loop  
+  if (n%2 == 0 || n%3 == 0) return false;  
+    
+  for (int i=5; i*i<=n; i=i+6)  
+    if (n%i == 0 || n%(i+2) == 0)  
+      return false;  
+    
+  return true;  
+}  
+  
+// Function to return the smallest 
+// prime number greater than N 
+int nextPrime(int N) 
+{ 
+  
+  // Base case 
+  if (N <= 1) 
+    return 2; 
+  
+  int prime = N; 
+  bool found = false; 
+  
+  // Loop continuously until isPrime returns 
+  // true for a number greater than n 
+  while (!found) { 
+    prime++; 
+  
+    if (isPrime(prime)) 
+      found = true; 
+  } 
+  
+  return prime; 
+} 
+
+//PRIME//
+
+
+
 struct OTax_b_hash{
 private:
   int a;
@@ -17,7 +64,7 @@ public:
   OTax_b_hash()
   {}
   
-  OTax_b_hash(int num, int bf_id, int csize){
+  OTax_b_hash(int num, int bf_id, int csize, int hash_count){
     a = 712 + bf_id + num*322;
     b = 1909 + bf_id + num*4043;
 
@@ -25,19 +72,25 @@ public:
     
     size = csize;
     
-    for(int i = 0; i < 7; i++){
+    for(int i = 0; i < hash_count; i++){
       if(num == i){
-	std::cout << "sa" << std::endl;
-	p = size/(i+2);
-	p+=23;
+	p = nextPrime(ceil(2*size/(i+3)));
+	//p = nextPrime(size/(i+1));
+	//p+=23;
       }
     }
     
-    if(num == 7)
-      this->p = csize-1;
+    if(num == hash_count-1){
+      this->p = nextPrime(csize*0.85);
+      while(this->p < csize-(csize*0.05))
+	{
+	  this->p = nextPrime(this->p);
+	}
+    }
+    //this->p = csize-1;
     
     std::cout << "hash_no: " << num << " p is: " << p << std::endl;
-    std::cout << "a: " << a << " b: " << b << std::endl;
+    //std::cout << "a: " << a << " b: " << b << std::endl;
     //delete[] OTPrimes;
   }
   
@@ -81,8 +134,6 @@ void toggle_bit(uint32_t* &ints, int big_loc, int small_loc){
 }
 */
 
-#define NOBITS 8192
-#define NOHASHES 3
 struct BloomFilter_OT {
 private:
   uint32_t* ints;
@@ -130,7 +181,7 @@ public:
     
     hashes = new OTax_b_hash*[hashCount];
     for(int i = 0; i < hashCount; i++){
-      hashes[i] = new OTax_b_hash(i, bf_id, no_bits);
+      hashes[i] = new OTax_b_hash(i, bf_id, no_bits, hashCount);
     }
   }
   
@@ -138,7 +189,7 @@ public:
   {}
   
   ~BloomFilter_OT() {
-    //delete [] ints;
+    delete [] ints;
     //delete [] hashes;
   }
 };
