@@ -4,6 +4,7 @@
 #include "bloomclass.h"
 #include "bf_2.hpp"
 #include "bf_3.hpp"
+#include "mlbfclass.hpp"
 #include <vector>
 #include <string>
 

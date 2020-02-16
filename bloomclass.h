@@ -28,7 +28,8 @@ template <class T1, class T2>
 
 template<class T1, class T2>
   unsigned int Bloom<T1, T2>::basicHash(T1 item1, T2 item2, unsigned int seed) {
-  return ((23*item1) + (47*item2) + (101*item1)*item2) % modPrime;
+  return ((23*item1) + (47*item2) + (101*item1)*item2 + seed) % modPrime;
+  //return ((431*item1) + (439*item2) + (521*item1)*item2 + seed) % modPrime;
 }
 
 template <class T1, class T2>
