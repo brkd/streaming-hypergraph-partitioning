@@ -662,6 +662,7 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
 	}
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
+      calculateCuts3(partitionCount, i);
       int maxIndexSize = partitionToNet[maxIndex].size() - 1;
       
       for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
@@ -799,11 +800,6 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
 
-  for(int i : readOrder)
-    {
-      std::cout << "Vertex: " << i << " Cut: " << cutArray[i] << std::endl;
-    }
-  
   delete[] sizeArray;
   delete[] indexArray;
   delete[] markerArray;
@@ -876,6 +872,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
       int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker);
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
+      calculateCuts3(partitionCount, i);
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
 	  int edge = this->reverse_sparseMatrix[k];      
@@ -1055,6 +1052,7 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
 	}
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
+      calculateCuts3(partitionCount, i);
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
        	  int edge = this->reverse_sparseMatrix[k];
@@ -1137,7 +1135,7 @@ void Partitioner::LDGBF3(int partitionCount, int slackValue, int seed, double im
 	}
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
-      
+      calculateCuts3(partitionCount, i);
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
 	  int edge = this->reverse_sparseMatrix[k];
@@ -1235,7 +1233,8 @@ void Partitioner::vertexOutput(int algorithm, int seed)
     textName = "BFvertex.txt";
   else if(algorithm == 5)
     textName = "BF2vertex.txt";
-    
+  else if(algorithm == 6)
+    textName = "BF3vertex.txt";
   std::ofstream outfile;
   outfile.open(textName, std::ios_base::app);
   
