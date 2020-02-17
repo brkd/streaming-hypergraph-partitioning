@@ -61,7 +61,7 @@ public:
     //int cords[2] = {first, last};
     cords[0] = first;
     cords[1] = last;
-    std::cout << "In series: " << first << " " << last << std::endl;
+    //std::cout << "In series: " << first << " " << last << std::endl;
 
     return cords;
   }
@@ -90,13 +90,13 @@ public:
 	}
 	else{
 	  child = 2*filter_num + 2;
-	  start = (start+end)/2;
+	  start = (start+end)/2 + 1;
 	}
 	int range[2] = {start, end};
       }
       else{ 
 	filter_num = 2;
-	start = floor((num_partitions-1)/2);
+	start = ((num_partitions-1)/2)+1;
 	end = num_partitions-1;
 	if(part < (start+end)/2){
 	  child = 2*filter_num + 1;
@@ -104,7 +104,7 @@ public:
 	}
 	else{
 	  child = 2*filter_num + 2;
-	  start = (start+end)/2;
+	  start = (start+end)/2 + 1;
 	}
 	int range[2] = {start, end};
       }
@@ -127,7 +127,7 @@ public:
       }
       else{
 	r_child = child * 2 + 2;
-	start = (start+end)/2;
+	start = (start+end)/2 + 1;
 	int range[2] = {start, end};
       }
 
@@ -163,7 +163,7 @@ public:
       }
       else{
 	r_child = (child*2)+2;
-	r_range[0] = (start+end)/2;
+	r_range[0] = (start+end)/2 + 1;
 	r_range[1] = end;
 	return recursive_query(edge, part, r_child, layer+1, r_range);
       }
@@ -182,12 +182,12 @@ public:
     
     if(part < num_filters/2){
       location_in_heap = 1;
-      int range[2] = {0, num_filters/2};
+      int range[2] = {0, num_filters/2 + 1};
       return recursive_query(edge, part, location_in_heap, 1, range);
     }
     else{
       location_in_heap = 2;
-      int range[2] = {num_filters/2, num_filters};
+      int range[2] = {num_filters/2, num_filters - 1};
       return recursive_query(edge, part, location_in_heap, 1, range);
     }
     
