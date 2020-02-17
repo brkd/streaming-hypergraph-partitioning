@@ -53,23 +53,19 @@ int main(int argc, char** argv) {
   
     int byteSize;
     int hashCount;
+    int num_layer;
     Partitioner* partitioner;  
     
     if(algorithm == 4 || algorithm == 5 || algorithm == 6 || algorithm == 7)
       { 
 	
-	if(algorithm == 7){
-	  byteSize = atoi(argv[7]);
-	  hashCount = atoi(argv[8]);
-	  num_layer = atoi(argv[9]);
-	  mlbf* first = new mlbf(num_layer, partitionCount, hashCount);
-	}
-
+	
 	if(argc > 8)
 	  {
 	    byteSize = atoi(argv[7]);
 	    hashCount = atoi(argv[8]);
-	    partitioner = new Partitioner(fileName, byteSize, hashCount);
+	    num_layer = atoi(argv[9]);
+	    partitioner = new Partitioner(fileName, byteSize, hashCount, num_layer);
 	  }
 	
       else
