@@ -68,8 +68,6 @@ public:
   
   bool recursive_insert(int layer, int child, int* range, int edge, int part){
     
-    std::cout << "Seg1" << std::endl; 
-
     if(layer == num_layers){
       bf_heap[child]->insert(edge, part);
       return true;
@@ -111,7 +109,6 @@ public:
 	int range[2] = {start, end};
       }
       
-      std::cout << "Seg2" << std::endl; 
       if(recursive_insert(layer+1, child, range, edge, part)){
 	bf_heap[filter_num]->insert(edge, part);
 	return true;
@@ -122,9 +119,7 @@ public:
       int end = range[1];
       int r_child = -1;
             
-      std::cout << "Seg3, layer: " << layer << " num_layers: " << num_layers << std::endl; 
       
-
       if(part < (start+end)/2){
 	r_child = child * 2 + 1;
 	end = (start+end)/2;
@@ -139,15 +134,7 @@ public:
       if(recursive_insert(layer+1, r_child, range, edge, part)){
 	bf_heap[child]->insert(edge, part);
 	return true;
-      }
-
-      
-
-      
-    
-    
-    
-    
+      }   
     
   }
 
@@ -155,8 +142,56 @@ public:
     int range[2] = {-1,-1};
     recursive_insert(1, 0, range, edge, part); //Start from layer 1
   }
+
+  bool recursive_query(int edge, int part, int child, int layer, int* range){
     
-       
+    if(layer == num_layers)
+      return bf_heap[child]->query(edge, part);
+
+    if(bf_heap[child]->query(edge,part)){
+      int r_child = -1;
+      int r_range[2] = {-1,-1};
+      int start = range[0];
+      int end = range[1];
+      
+      if(part < (start+end)/2){
+	r_child = (child*2)+1;
+	r_range[0] = start;
+	r_range[1] = (start+end)/2;
+	return recursive_query(edge, part, r_child, layer+1, r_range);
+      }
+      else{
+	r_child = (child*2)+2;
+	r_range[0] = (start+end)/2;
+	r_range[1] = end;
+	return recursive_query(edge, part, r_child, layer+1, r_range);
+      }
+      
+      
+    }
+    else{ 
+      return false;
+    }
+
+  }
+
+  bool query(int edge, int part){
+    
+    int location_in_heap = -1;
+    
+    if(part < num_filters/2){
+      location_in_heap = 1;
+      int range[2] = {0, num_filters/2};
+      return recursive_query(edge, part, location_in_heap, 1, range);
+    }
+    else{
+      location_in_heap = 2;
+      int range[2] = {num_filters/2, num_filters};
+      return recursive_query(edge, part, location_in_heap, 1, range);
+    }
+    
+    
+  }
 
    
 };

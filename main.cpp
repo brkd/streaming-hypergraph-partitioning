@@ -63,9 +63,13 @@ int main(int argc, char** argv) {
 	  hashCount = atoi(argv[8]);
 	  num_layer = atoi(argv[9]);
 	  mlbf* first = new mlbf(num_layer, partitionCount, hashCount);
-	  std::cout << "sa2" << std::endl;
+	  std::cout << "4,13: " << first->query(4,13) << std::endl;
+	  std::cout << "147,1352: " << first->query(147,1352) << std::endl;
 	  first->insert(4, 13);
-	  std::cout << "sa3" << std::endl;
+	  first->insert(4, 13);
+	  first->insert(147, 1352);
+	  std::cout << "4,13: " << first->query(4,13) << std::endl;
+	  std::cout << "147,1352: " << first->query(147,1352) << std::endl;
 	  exit(1);
 	}
 
