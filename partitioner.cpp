@@ -561,6 +561,13 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
     }
+else if(algorithm == 7)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LDGBF4MULTI(partitionCount, slackValue, seed, imbal, byteSize, hashCount, noLayers);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+    }
   
   //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
   std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
@@ -1172,7 +1179,7 @@ void Partitioner::LDGBF4MULTI(int partitionCount, int slackValue, int seed, doub
   
   //BloomFilter_OT* bf = new BloomFilter_OT(byteSize*8, hashCount, 5);
   mlbf* bf = new mlbf(noLayers, partitionCount, hashCount, byteSize);
-  
+  std::cout << "Initialized" << std::endl;
 
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)

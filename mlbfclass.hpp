@@ -139,6 +139,7 @@ public:
   }
 
   void insert(int edge, int part){
+    //std::cout << "Inserting" << std::endl;
     int range[2] = {-1,-1};
     recursive_insert(1, 0, range, edge, part); //Start from layer 1
   }
