@@ -1166,6 +1166,90 @@ void Partitioner::LDGBF3(int partitionCount, int slackValue, int seed, double im
   delete[] sizeArray;
 }
 
+void Partitioner::LDGBF4MULTI(int partitionCount, int slackValue, int seed, double imbal, int byteSize, int hashCount, int noLayers)
+{
+  //Bloom<int, int>* bloomFilter = new Bloom<int, int>(this->byteSize, this->hashCount);
+  
+  //BloomFilter_OT* bf = new BloomFilter_OT(byteSize*8, hashCount, 5);
+  mlbf* bf = new mlbf(noLayers, partitionCount, hashCount, byteSize);
+  
+
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+    }
+  
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+    {
+      readOrder.push_back(i);
+    }
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  
+  double capacityConstraint;
+  int currVertexCount = 0;
+  for (int i : readOrder)
+    {
+      if((imbal*currVertexCount) >= slackValue)
+	capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      else
+	capacityConstraint = ((double)slackValue) / partitionCount;
+      
+      double maxScore = -1.0;
+      int maxIndex = -1;
+      
+      for (int j = 0; j < partitionCount; j++)
+	{
+	  int connectivity = this->BFConnectivityMult(bf, j, i);
+	  double partToCapacity = sizeArray[j] / capacityConstraint;
+	  double penalty = 1 - partToCapacity;
+	  double score = penalty * connectivity;
+	  if (score > maxScore)
+	    {
+	      maxScore = score;
+	      maxIndex = j;
+	    }
+	  else if (score == maxScore)
+	    {
+	      if (sizeArray[j] < sizeArray[maxIndex])
+		{
+		  maxIndex = j;
+		}
+	    }
+	}
+      partVec[i] = maxIndex;
+      sizeArray[maxIndex] += 1;
+      
+      for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
+	{
+	  int edge = this->reverse_sparseMatrix[k];
+	  bf->insert(edge, maxIndex);
+	}
+      
+      currVertexCount++;
+      
+#ifdef WATCH
+      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+      
+      
+      
+    }
+  
+  std::cout << std::endl;
+  
+  std::cout << "******PART SIZES*******" << std::endl;
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  }
+  
+  delete[] sizeArray;
+}
+
 void Partitioner::LDGMultiBF()
 {
   /*	int* sizeArray = new int[this->partitionCount];
@@ -1389,6 +1473,19 @@ int Partitioner::BFConnectivity2(BloomFilter* bf, int partitionID, int vertex)
 }
 
 int Partitioner::BFConnectivity3(BloomFilter_OT* bloomFilter, int partitionID, int vertex)
+{
+  int connectivityCount = 0;
+  for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
+    {
+      int edge = this->reverse_sparseMatrix[k];
+      if (bloomFilter->query(edge, partitionID))
+	connectivityCount++;
+    }
+  
+  return connectivityCount;
+}  
+
+int Partitioner::BFConnectivityMult(mlbf* bloomFilter, int partitionID, int vertex)
 {
   int connectivityCount = 0;
   for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)

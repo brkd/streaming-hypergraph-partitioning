@@ -12,9 +12,9 @@ private:
   BloomFilter_OT** bf_heap;
   
 public:
-  mlbf(int NUM_LAYERS, int NUM_PARTITIONS, int HASH_COUNT){
+  mlbf(int NUM_LAYERS, int NUM_PARTITIONS, int HASH_COUNT, int NO_BYTES){
     hash_count = HASH_COUNT;
-    byte_size = 8000000;
+    byte_size = NO_BYTES;
     num_layers = NUM_LAYERS;
     layer_size = byte_size / num_layers;
     

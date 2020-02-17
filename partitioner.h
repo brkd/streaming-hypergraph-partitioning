@@ -31,6 +31,7 @@ class Partitioner
   int byteSize;
   int hashCount;
   bool symmetry;
+  int noLayers;
   
   //Methods
   void read_binary_graph(std::string fileName);
@@ -42,25 +43,28 @@ class Partitioner
   void LDGBF(int, int, int, double);
   void LDGBF2(int, int, int, double, int, int);
   void LDGBF3(int, int, int, double, int, int);
+  void LDGBF4MULTI(int, int, int, double, int, int, int);
   void LDGMultiBF();
   
   void vertexOutput(int, int);
   int calculateCuts(int);
   int calculateCuts2(int);
   void calculateCuts3(int, int);
-
+  
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
   int BFConnectivity(Bloom<int, int>*, int, int);
   int BFConnectivity2(BloomFilter* bf, int, int);
   int BFConnectivity3(BloomFilter_OT* bf, int, int);
+  int BFConnectivityMult(mlbf* bf, int, int);
  public:
   //Constructors
   Partitioner(std::string);
-  Partitioner(std::string name, int byteSize, int hashCount):Partitioner(name)
+ Partitioner(std::string name, int byteSize, int hashCount, int noLayers):Partitioner(name)
   {
     this->byteSize = byteSize;
     this->hashCount = hashCount;
+    this->noLayers = noLayers;
   }
   void check_and_write_binary_graph(std::string fileName);
   
