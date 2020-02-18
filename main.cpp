@@ -1,5 +1,5 @@
 #include "partitioner.cpp"
-
+#define MBYTE 1000000
 int main(int argc, char** argv) {
   int algorithm = atoi(argv[1]);
 
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
       {
 	if(argc > 8)
 	  {
-	    byteSize = atoi(argv[7]);
+	    byteSize = atoi(argv[7]) * MBYTE;
 	    hashCount = atoi(argv[8]);
 	    if(argc > 9)
 		num_layer = atoi(argv[9]);

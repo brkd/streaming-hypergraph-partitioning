@@ -114,9 +114,6 @@ def start_bf_partitioning(algorithm, partition_count, imbal, slack_val, matrix, 
     out = popen.stdout.read()
     if out != b'':
         write_output(matrix, out.decode('utf-8'), algorithm, partition_count, imbal, slack_val, randomization_count, mb_size, hash_count)
-        print("kek")
-    else:
-        print("hey")
 
 def start_partitioning(algorithm, partition_count, imbal, slack_val, matrix, randomization_count):
     args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count)
