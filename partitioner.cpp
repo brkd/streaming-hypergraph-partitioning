@@ -515,7 +515,7 @@ Partitioner::~Partitioner()
   delete[] this->sparseMatrixIndex;
 }
 
-void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal, int i)
 {
   std::cout << "Started partitioning" << std::endl;
   //Partition
@@ -536,7 +536,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
   else if(algorithm == 3)
     {
       auto start = std::chrono::high_resolution_clock::now();
-      this->LDGn2p_i(partitionCount, slackValue, seed, imbal);
+      this->LDGn2p_i(partitionCount, slackValue, seed, imbal, i);
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
     }
@@ -812,7 +812,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   delete[] markerArray;
 }
 
-void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double imbal, int ii)
 {
   int* sizeArray = new int[partitionCount];
   int* indexArray = new int[partitionCount];
@@ -839,7 +839,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   int currVertexCount = 0;
   
   std::default_random_engine generator;
-  std::uniform_int_distribution<int> distribution(0,INITVECSIZE - 1);
+  std::uniform_int_distribution<int> distribution(0,ii - 1);
   for(int i : readOrder)
     {
       if((imbal*currVertexCount) >= slackValue)
@@ -860,7 +860,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
 		      std::vector<int>* newEdge = new std::vector<int>();
 		      netToPartition.push_back(newEdge);
 		      int n2pSize = netToPartition.size();
-		      netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+		      netToPartition[n2pSize - 1]->reserve(ii);
 		      tracker[j] = n2pSize - 1;    	      
 		    }            
 		}
@@ -871,7 +871,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
 	      std::vector<int>* newEdge = new std::vector<int>();
 	      netToPartition.push_back(newEdge);
 	      int n2pSize = netToPartition.size();
-	      netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+	      netToPartition[n2pSize - 1]->reserve(ii);
 	      tracker[edge] = n2pSize - 1;
 	    }
 	}
@@ -885,7 +885,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
 	  int edge = this->reverse_sparseMatrix[k];      
 	  if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
 	    {
-	      if(netToPartition[tracker[edge]]->size() != INITVECSIZE)
+	      if(netToPartition[tracker[edge]]->size() != ii)
 		netToPartition[tracker[edge]]->push_back(maxIndex);    
 	      else
 		{
