@@ -17,6 +17,8 @@ class Partitioner
 {
  private:
   //Attributes
+  std::string fileName;
+  
   int* sparseMatrix;
   int* sparseMatrixIndex;
   int* reverse_sparseMatrix;

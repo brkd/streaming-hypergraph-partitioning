@@ -1,9 +1,3 @@
-from os import listdir, stat
-from os.path import isfile, join
-import matplotlib.pyplot as plt
-import threading
-import subprocess
-import sys
 
 #X, Y_filler = [], []
 #with open("N2Pvertex.txt") as n2pfile:
@@ -64,25 +58,80 @@ import sys
 #plt.plot(X4, Y4, color='black')
 #plt.show()
 
+from os import listdir, stat
+from os.path import isfile, join
+from math import sqrt
+from statistics import variance
+import matplotlib.pyplot as plt
+import threading
+import subprocess
+import sys
+import csv
+
+csv_header = ["Matrix", "rt(s)", "cuts", "slack", "imbal", "mb size", "hash", "part-count", "SD"] 
+
+def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_val, randomization_count, byte_size = -1, hash_count = -1):
+    if int(algorithm) == 2:
+        name = "N2P"
+    elif int(algorithm) == 3:
+        name = "N2P_K"
+    elif int(algorithm) == 4:
+        name = "BF1"
+    elif int(algorithm) == 5:
+        name = "BF2"
+    elif int(algorithm) == 6:
+        name = "BF3"
+    elif int(algorithm) == 7:
+        name = "BF4MULTI"
+    csv_name = "Results/" + name + ".csv"
+    with open(csv_name, "a+") as f:
+        writer = csv.writer(f)
+        size_vecs = []
+        size_vec = []
+        durations = []
+        cuts = []
+        devs = []
+        if stat(csv_name).st_size == 0:
+            writer.writerow(csv_header)
+        for line in output.splitlines():
+            if "Duration:" in line:
+                durations.append(line.split(":")[1])
+            elif "Cuts:" in line:
+                cuts.append(line.split(":")[1])
+            elif "part " in line:
+                size_vec.append(int(line.split(":")[1]))
+                if len(size_vec) == int(partition_count):
+                    size_vecs.append(size_vec)
+                    size_vec = []
+        for i in range(0, int(randomization_count)):
+            devs.append(sqrt(variance(size_vecs[i])))
+        for i in range(0, int(randomization_count)):
+            writer.writerow([matrix_name, durations[i], cuts[i], slack_val, imbal, byte_size, hash_count, partition_count, devs[i], size_vecs[i]])
+            
 def start_bf_partitioning(algorithm, partition_count, imbal, slack_val, matrix, randomization_count, mb_size, hash_count):
-    size = mb_size * 1000000
-    print(size)
+    size = mb_size
     args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count, str(size), hash_count)
-    popen = subprocess.Popen(args, stdout=subprocess.PIPE)
-    output = popen.stdout.read()
-    print(output.decode('utf-8'))
+    popen = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out = popen.stdout.read()
+    if out != b'':
+        write_output(matrix, out.decode('utf-8'), algorithm, partition_count, imbal, slack_val, randomization_count, mb_size, hash_count)
+    else:
+        print("hey")
 
 def start_partitioning(algorithm, partition_count, imbal, slack_val, matrix, randomization_count):
     args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count)
-    print(args)
-    popen = subprocess.Popen(args, stdout=subprocess.PIPE)
-    output = popen.stdout.read()
-    print(output.decode('utf-8'))
+    popen = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out = popen.stdout.read()
+    if out != b'':
+        write_output(matrix, out.decode('utf-8'), algorithm, partition_count, imbal, slack_val, randomization_count)
 
 if __name__ == "__main__":
-    if(len(sys.argv)) <= 7:
+    if(len(sys.argv)) == 1:
+        print("pc, imbal, slack_val, dir, rc, mb_size, hc")
+        exit()
+    elif(len(sys.argv)) <= 7:
         print("Missing input parameter(s).")
-        exit()        
+        exit()    
     algorithms = ["2", "3", "4", "5", "6"]
     partition_count = sys.argv[1]
     imbal = sys.argv[2]

@@ -23,9 +23,6 @@ int main(int argc, char** argv) {
   int randomizationCount;
   int num_layer;
   Partitioner* partitioner;  
-
-
-  
   
   if(algorithm == 0)
   { 
@@ -62,7 +59,7 @@ int main(int argc, char** argv) {
 	
 	if(argc > 8)
 	  {
-	    byteSize = atoi(argv[7]);
+	    byteSize = atoi(argv[7]) * 1000000;
 	    hashCount = atoi(argv[8]);
 	    num_layer = atoi(argv[9]);
 	    partitioner = new Partitioner(fileName, byteSize, hashCount, num_layer);

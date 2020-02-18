@@ -50,7 +50,7 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 //Public methods
 Partitioner::Partitioner(std::string fileName){
   //Read matrix
-
+  this->fileName = fileName;
   std::string mtx_name = fileName + ".mtx";
   std::string bin_name = fileName + ".shpbin";
   const char* bfile = bin_name.c_str();  
@@ -1326,6 +1326,8 @@ void Partitioner::vertexOutput(int algorithm, int seed)
     textName = "BF2vertex.txt";
   else if(algorithm == 6)
     textName = "BF3vertex.txt";
+  else if(algorithm == 7)
+    textName = "BF4MULTIvertex.txt";
   std::ofstream outfile;
   outfile.open(textName, std::ios_base::app);
   
@@ -1337,6 +1339,7 @@ void Partitioner::vertexOutput(int algorithm, int seed)
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
 
+  outfile << "%OUTPUT FOR RUN ID " << seed << " MATRIX ID " << this->fileName << "\n";
   int cur_vertex = 0;
   for (int i : readOrder)
     {
