@@ -109,12 +109,12 @@ def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_v
             writer.writerow([matrix_name, durations[i], cuts[i], slack_val, imbal, byte_size, hash_count, partition_count, devs[i], size_vecs[i]])
             
 def start_bf_partitioning(algorithm, partition_count, imbal, slack_val, matrix, randomization_count, mb_size, hash_count):
-    size = mb_size
-    args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count, str(size), hash_count)
+    args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count, mb_size, hash_count)
     popen = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out = popen.stdout.read()
     if out != b'':
         write_output(matrix, out.decode('utf-8'), algorithm, partition_count, imbal, slack_val, randomization_count, mb_size, hash_count)
+        print("kek")
     else:
         print("hey")
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     slack_val = sys.argv[3]
     directory = sys.argv[4]
     randomization_count = sys.argv[5]
-    mb_size = int(sys.argv[6])
+    mb_size = sys.argv[6]
     hash_count = sys.argv[7]
     files = [f.split(".", 1)[0] for f in listdir(directory) if isfile(join(directory, f))]
     matrices = []

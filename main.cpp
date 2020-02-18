@@ -54,30 +54,31 @@ int main(int argc, char** argv) {
     Partitioner* partitioner;  
     
     if(algorithm == 4 || algorithm == 5 || algorithm == 6 || algorithm == 7)
-      { 
-	
-	
+      {
 	if(argc > 8)
 	  {
-	    byteSize = atoi(argv[7]) * 1000000;
+	    byteSize = atoi(argv[7]);
 	    hashCount = atoi(argv[8]);
-	    num_layer = atoi(argv[9]);
+	    if(argc > 9)
+		num_layer = atoi(argv[9]);
+	    else
+		num_layer = -1;
 	    partitioner = new Partitioner(fileName, byteSize, hashCount, num_layer);
 	  }
 	
-      else
-      {
-	std::cout << "Missing info for BF " << std::endl;
-	return 1;
+	else
+	  {
+	    std::cout << "Missing info for BF " << std::endl;
+	    return 1;
+	  }
       }
-    }
     else
       partitioner = new Partitioner(fileName);
     
     for(int i = 0; i < randomizationCount; i++)
-    {
-      partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal);   
-    }
+      {
+	partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal);   
+      }
     
     delete partitioner;
   }
