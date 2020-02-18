@@ -13,6 +13,7 @@ possibly eliminate the needless duplication of data and improve both the yield a
 The practice of effectively partitioning large graphs is crucial in real-world applications like minimizing communication cost or I/O cost and maximization of robustness in social graphs.
 
 The variations of partitioning algorithms that are being worked on are:
+
 *Random Partitioning
 
 *Part-to-Net
