@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
 		std::cout << "4 - BF\n";
 		std::cout << "5 - BF2\n";
 		std::cout << "6 - BF3\n";
+		std::cout << "7 - Multilayer BF\n";
 		std::cout << "--------------------\n";
 		std::cout << "arg2: Partition Count/n";
 		std::cout << "arg3: Imbalance\n";
@@ -24,6 +25,8 @@ int main(int argc, char** argv) {
 		std::cout << "arg7: Byte size\n";
 		std::cout << "arg8: Hash Count\n";
 		std::cout << "--------------------\n";
+		std::cout << "If Alg is N2Pi:\n";
+		std::cout << "arg7: i\n";
 	}
 
 	else
@@ -103,9 +106,16 @@ int main(int argc, char** argv) {
 			else
 				partitioner = new Partitioner(fileName);
 
+			int i = 0; //doesn't do anything unless alg = 3
+
+			if(algorithm == 3)
+			{
+				i = atoi(argv[7]);
+			}
+
 			for (int i = 0; i < randomizationCount; i++)
 			{
-				partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal);
+				partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal, i);
 			}
 
 			delete partitioner;
