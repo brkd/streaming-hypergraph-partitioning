@@ -74,7 +74,7 @@ class Partitioner
   ~Partitioner();
   
   //Methods
-  void partition(int, int, int, int, double);
+  void partition(int, int, int, int, double, int, int);
   void RandomPartition(int, int);
 };
 #endif

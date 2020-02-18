@@ -80,9 +80,9 @@ for i in range(0, len(Y_filler4)):
     else:
         Y4.append(Y4[i - 1] + Y_filler4[i])
 
-plt.plot(X, Y, color='blue')
-plt.plot(X, X, color='green')
-plt.plot(X2, Y2, color='red')
-plt.plot(X3, Y3, color = 'purple')
-plt.plot(X4, Y4, color='black')
+line1 = plt.plot(X, Y, label="N2P")
+line2 = plt.plot(X2, Y2, label="BF1")
+line3 = plt.plot(X3, Y3, label="BF2")
+line4 = plt.plot(X4, Y4, label="BF3")
+plt.legend()
 plt.show()

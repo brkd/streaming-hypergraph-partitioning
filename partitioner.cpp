@@ -515,7 +515,7 @@ Partitioner::~Partitioner()
   delete[] this->sparseMatrixIndex;
 }
 
-void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal, int i)
+void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal, int i, int finalRun)
 {
   std::cout << "Started partitioning" << std::endl;
   //Partition
@@ -571,7 +571,8 @@ else if(algorithm == 7)
   
   //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
   std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
-  this->vertexOutput(algorithm, seed);
+  if (finalRun == 1)
+    this->vertexOutput(algorithm, seed);  
 
   //compute cut and report  
 }
@@ -1329,8 +1330,7 @@ void Partitioner::vertexOutput(int algorithm, int seed)
   else if(algorithm == 7)
     textName = "BF4MULTIvertex.txt";
   std::ofstream outfile;
-  outfile.open(textName, std::ios_base::app);
-  
+  outfile.open(textName);  
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
     {

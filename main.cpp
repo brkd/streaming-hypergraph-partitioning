@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv) {
 
-  if (argv[1] == "h")
+  if (argc == 1)
     {
       std::cout << "--------------------\n";
       std::cout << "arg1: Algorithm\n";
@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
       std::cout << "6 - BF3\n";
       std::cout << "7 - Multilayer BF\n";
       std::cout << "--------------------\n";
-      std::cout << "arg2: Partition Count/n";
+      std::cout << "arg2: Partition Count\n";
       std::cout << "arg3: Imbalance\n";
       std::cout << "arg4: Slack\n";
       std::cout << "arg5: Filename\n";
@@ -106,16 +106,16 @@ int main(int argc, char** argv) {
 	  else
 	    partitioner = new Partitioner(fileName);
 	  
-	  int i = 0; //doesn't do anything unless alg = 3
+	  int k = 0; //doesn't do anything unless alg = 3
 	  
 	  if(algorithm == 3)
 	    {
-	      i = atoi(argv[7]);
+	      k = atoi(argv[7]);
 	    }
 	  
 	  for (int i = 0; i < randomizationCount; i++)
 	    {
-	      partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal, i);
+	      partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal, k, randomizationCount);
 	    }
 	  
 	  delete partitioner;
