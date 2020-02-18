@@ -14,11 +14,17 @@ The practice of effectively partitioning large graphs is crucial in real-world a
 
 The variations of partitioning algorithms that are being worked on are:
 *Random Partitioning
+
 *Part-to-Net
+
 *Net-to-Part
+
 *Net-to-Part_i
+
 *Bloom Filter
+
 *Multilayered Bloom Filter
+
 
 Part-to-Net and Net-to-Part approaches include keeping information on which nets have a leg
 in a partition or which partitions the queried net has vertices in. That information is used
