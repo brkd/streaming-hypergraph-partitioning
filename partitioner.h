@@ -41,7 +41,7 @@ class Partitioner
   
   void LDGp2n(int, int, int, double);
   void LDGn2p(int, int, int, double);
-  void LDGn2p_i(int, int, int, double);
+  void LDGn2p_i(int, int, int, double, int);
   void LDGBF(int, int, int, double);
   void LDGBF2(int, int, int, double, int, int);
   void LDGBF3(int, int, int, double, int, int);
