@@ -16,6 +16,7 @@ public:
     hash_count = HASH_COUNT;
     byte_size = NO_BYTES;
     num_layers = NUM_LAYERS;
+    num_partitions = NUM_PARTITIONS;
     layer_size = byte_size / num_layers;
     
     num_filters = 0;
@@ -67,95 +68,123 @@ public:
   }
   
   bool recursive_insert(int layer, int child, int* range, int edge, int part){
-    
-    if(layer == num_layers){
-      bf_heap[child]->insert(edge, part);
-      return true;
-    }
+
+    //std::cout << "Part: " << part << " edge: " << edge << " child: " << child << std::endl;
     
     if(child == 0){
-      int filter_num = 0;
-      int child = -1;
+      int filter_num = -1;
+      int r_child = -1;
       
       int start = 0;
       int end = num_partitions-1;
       
-      if(part < (start+end)/2){
+      int range[2] = {-1, -1};
+      
+      if(part <= (start+end)/2){
 	filter_num = 1;
 	start = 0;
-	end = floor((num_partitions-1)/2);
-	if(part < (start+end)/2){
-	  child = 2*filter_num + 1;
-	  end = (start+end)/2;
+	end = (num_partitions-1)/2;
+	//r_child = 2*filter_num + 1;  
+      	range[0] = start;
+	range[1] = end;
+	if(part <= (start+end)/2){
+	  r_child = 2*filter_num + 1;  
+	  range[1] = (start+end)/2;
 	}
 	else{
-	  child = 2*filter_num + 2;
-	  start = (start+end)/2 + 1;
+	  r_child = 2*filter_num + 2;
+	  range[0] = (start+end)/2 + 1;
 	}
-	int range[2] = {start, end};
       }
       else{ 
 	filter_num = 2;
 	start = ((num_partitions-1)/2)+1;
 	end = num_partitions-1;
-	if(part < (start+end)/2){
-	  child = 2*filter_num + 1;
-	  end = (start+end)/2;
+	range[0] = start;
+	range[1] = end;
+	//r_child = 2*filter_num + 2;
+	if(part <= (start+end)/2){
+	  r_child = 2*filter_num + 1;  
+	  range[1] = (start+end)/2;
 	}
 	else{
-	  child = 2*filter_num + 2;
-	  start = (start+end)/2 + 1;
+	  r_child = 2*filter_num + 2;
+	  range[0] = (start+end)/2 + 1;
 	}
-	int range[2] = {start, end};
       }
       
-      if(recursive_insert(layer+1, child, range, edge, part)){
+      
+      if(num_layers == 1){
+	//std::cout << "Part: " << part << "-->Inserting filter num: " << filter_num << std::endl;
+	bf_heap[filter_num]->insert(edge, part);
+	return true;
+      }
+      
+      else if(recursive_insert(layer+1, r_child, range, edge, part)){
+	//std::cout << "Inserting filter num: " << filter_num << std::endl;
 	bf_heap[filter_num]->insert(edge, part);
 	return true;
       }
     }
-
-      int start = range[0];
-      int end = range[1];
-      int r_child = -1;
-            
-      
-      if(part < (start+end)/2){
-	r_child = child * 2 + 1;
-	end = (start+end)/2;
-	int range[2] = {start, end};
-      }
-      else{
-	r_child = child * 2 + 2;
-	start = (start+end)/2 + 1;
-	int range[2] = {start, end};
-      }
-
-      if(recursive_insert(layer+1, r_child, range, edge, part)){
-	bf_heap[child]->insert(edge, part);
-	return true;
-      }   
+    
+    if(layer == num_layers){
+      bf_heap[child]->insert(edge, part);
+      //std::cout << "Part: " << part << " start: " << range[0] << " end: " << range[1] << std::endl;
+      //std::cout << "Insert: Part " << part << " chose filter no: " << child <<std::endl;
+      return true;
+    }
+    
+    int start = range[0];
+    int end = range[1];
+    int r_child = -1;
+    int r_range[2] = {-1, -1};
+    
+    //std::cout << "Part: " << part << " start: " << start << " end: " << end << std::endl;
+    
+    
+    if(part <= (start+end)/2){
+      r_child = child * 2 + 1;
+      end = (start+end)/2;
+      r_range[0] = start;
+      r_range[1] = end;
+  }
+    else{
+      r_child = child * 2 + 2;
+      start = (start+end)/2 + 1;
+      r_range[0] = start;
+      r_range[1] = end;
+    }
+    
+    if(recursive_insert(layer+1, r_child, r_range, edge, part)){
+      bf_heap[child]->insert(edge, part);
+      return true;
+    }   
     
   }
-
+  
   void insert(int edge, int part){
     //std::cout << "Inserting" << std::endl;
     int range[2] = {-1,-1};
-    recursive_insert(1, 0, range, edge, part); //Start from layer 1
+    bool status = recursive_insert(1, 0, range, edge, part); //Start from layer 1
+    //std::cout << "Status: " << status << std::endl;
   }
 
   bool recursive_query(int edge, int part, int child, int layer, int* range){
     
-    if(layer == num_layers)
+    if(layer == num_layers){
+      //std::cout << "Query: Part " << part << " chose filter no: " << child <<std::endl;
       return bf_heap[child]->query(edge, part);
-
+    }
+    
     if(bf_heap[child]->query(edge,part)){
       int r_child = -1;
       int r_range[2] = {-1,-1};
       int start = range[0];
       int end = range[1];
       
-      if(part < (start+end)/2){
+      //std::cout << "Part: " << part << " start: " << start << " end: " << end << std::endl;
+
+      if(part <= (start+end)/2){
 	r_child = (child*2)+1;
 	r_range[0] = start;
 	r_range[1] = (start+end)/2;
@@ -180,14 +209,14 @@ public:
     
     int location_in_heap = -1;
     
-    if(part < num_filters/2){
+    if(part <= (num_partitions-1)/2){
       location_in_heap = 1;
-      int range[2] = {0, num_filters/2 + 1};
+      int range[2] = {0, ((num_partitions-1)/2)};
       return recursive_query(edge, part, location_in_heap, 1, range);
     }
     else{
       location_in_heap = 2;
-      int range[2] = {num_filters/2, num_filters - 1};
+      int range[2] = {(num_partitions-1)/2+1, num_partitions - 1};
       return recursive_query(edge, part, location_in_heap, 1, range);
     }
     
