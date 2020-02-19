@@ -50,7 +50,7 @@ int writeBinaryGraph(FILE* bp, etype *xadj, vtype *adj,
 //Public methods
 Partitioner::Partitioner(std::string fileName){
   //Read matrix
-
+  this->fileName = fileName;
   std::string mtx_name = fileName + ".mtx";
   std::string bin_name = fileName + ".shpbin";
   const char* bfile = bin_name.c_str();  
@@ -515,7 +515,7 @@ Partitioner::~Partitioner()
   delete[] this->sparseMatrixIndex;
 }
 
-void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::partition(int algorithm, int partitionCount, int slackValue, int seed, double imbal, int i, int finalRun)
 {
   std::cout << "Started partitioning" << std::endl;
   //Partition
@@ -536,7 +536,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
   else if(algorithm == 3)
     {
       auto start = std::chrono::high_resolution_clock::now();
-      this->LDGn2p_i(partitionCount, slackValue, seed, imbal);
+      this->LDGn2p_i(partitionCount, slackValue, seed, imbal, i);
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
     }
@@ -571,7 +571,8 @@ else if(algorithm == 7)
   
   //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
   std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
-  this->vertexOutput(algorithm, seed);
+  if (finalRun == 1)
+    this->vertexOutput(algorithm, seed);  
 
   //compute cut and report  
 }
@@ -669,6 +670,7 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
 	}
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
+      calculateCuts3(partitionCount, i);
       int maxIndexSize = partitionToNet[maxIndex].size() - 1;
       
       for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
@@ -806,17 +808,12 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
 
-  for(int i : readOrder)
-    {
-      std::cout << "Vertex: " << i << " Cut: " << cutArray[i] << std::endl;
-    }
-  
   delete[] sizeArray;
   delete[] indexArray;
   delete[] markerArray;
 }
 
-void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double imbal)
+void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double imbal, int ii)
 {
   int* sizeArray = new int[partitionCount];
   int* indexArray = new int[partitionCount];
@@ -843,7 +840,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   int currVertexCount = 0;
   
   std::default_random_engine generator;
-  std::uniform_int_distribution<int> distribution(0,INITVECSIZE - 1);
+  std::uniform_int_distribution<int> distribution(0,ii - 1);
   for(int i : readOrder)
     {
       if((imbal*currVertexCount) >= slackValue)
@@ -864,7 +861,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
 		      std::vector<int>* newEdge = new std::vector<int>();
 		      netToPartition.push_back(newEdge);
 		      int n2pSize = netToPartition.size();
-		      netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+		      netToPartition[n2pSize - 1]->reserve(ii);
 		      tracker[j] = n2pSize - 1;    	      
 		    }            
 		}
@@ -875,7 +872,7 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
 	      std::vector<int>* newEdge = new std::vector<int>();
 	      netToPartition.push_back(newEdge);
 	      int n2pSize = netToPartition.size();
-	      netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+	      netToPartition[n2pSize - 1]->reserve(ii);
 	      tracker[edge] = n2pSize - 1;
 	    }
 	}
@@ -883,12 +880,13 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
       int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker);
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
+      calculateCuts3(partitionCount, i);
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
 	  int edge = this->reverse_sparseMatrix[k];      
 	  if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
 	    {
-	      if(netToPartition[tracker[edge]]->size() != INITVECSIZE)
+	      if(netToPartition[tracker[edge]]->size() != ii)
 		netToPartition[tracker[edge]]->push_back(maxIndex);    
 	      else
 		{
@@ -1062,6 +1060,7 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
 	}
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
+      calculateCuts3(partitionCount, i);
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
        	  int edge = this->reverse_sparseMatrix[k];
@@ -1144,7 +1143,7 @@ void Partitioner::LDGBF3(int partitionCount, int slackValue, int seed, double im
 	}
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
-      
+      calculateCuts3(partitionCount, i);
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
 	  int edge = this->reverse_sparseMatrix[k];
@@ -1326,10 +1325,12 @@ void Partitioner::vertexOutput(int algorithm, int seed)
     textName = "BFvertex.txt";
   else if(algorithm == 5)
     textName = "BF2vertex.txt";
-    
+  else if(algorithm == 6)
+    textName = "BF3vertex.txt";
+  else if(algorithm == 7)
+    textName = "BF4MULTIvertex.txt";
   std::ofstream outfile;
-  outfile.open(textName, std::ios_base::app);
-  
+  outfile.open(textName);  
   std::vector<int> readOrder;
   for (int i = 0; i < this->vertexCount; i++)
     {
@@ -1338,6 +1339,7 @@ void Partitioner::vertexOutput(int algorithm, int seed)
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
 
+  outfile << "%OUTPUT FOR RUN ID " << seed << " MATRIX ID " << this->fileName << "\n";
   int cur_vertex = 0;
   for (int i : readOrder)
     {
