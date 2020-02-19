@@ -1,4 +1,3 @@
-
 from os import listdir, stat
 from os.path import isfile, join
 from math import sqrt
@@ -10,72 +9,70 @@ import sys
 import csv
 
 csv_header = ["Matrix", "rt(s)", "cuts", "slack", "imbal", "mb size", "hash", "part-count", "SD"]
-#def draw_graphs(algorithms, partition_count, imbal, slack_val, randomization_count, mb_size, hash_count):
- #   X, Y_filler = [], []
-  #  with open("N2Pvertex.txt") as n2pfile:
-   #     for line in n2pfile:
-    #        if '@' in line:
-     #           break
-      #      elif '%' in line:
-       #         matrix =
-        #        run =
-         #   else:        
-          #      X.append(int(line.split(',')[0]))
-           #     Y_filler.append(int(line.split(',')[2]))    
-            #    Y = []
-             #   for i in range(0, len(Y_filler)):
-              #      if i == 0:
-               #         Y.append(Y_filler[i])
-                #    else:
-                 #       Y.append(Y[i - 1] + Y_filler[i])
-                  #      X2, Y_filler2 = [], []
-                   #     with open("BFvertex.txt") as bffile:
-                    #        for line in bffile:
-                     #           if '@' in line:
-                      #              break
-                       #         elif '%' in line:
-                        #            matrix =
-                         #           run =
-                          #      else:        
-                           #         for line in bffile:
-                            #            X2.append(int(line.split(',')[0]))
-                             #           Y_filler2.append(int(line.split(',')[2]))    
-                              #          Y2 = []
-                               #         for i in range(0, len(Y_filler2)):
-                                #            if i == 0:
-                                 #               Y2.append(Y_filler2[i])
-                                  #          else:
-                                   #             Y2.append(Y2[i - 1] + Y_filler2[i])
-                                    #            X3, Y_filler3 = [], []
-                                     #           with open("BF2vertex.txt") as bf2file:
-                                      #              for line in bf2file:
-                                       #                 X3.append(int(line.split(',')[0]))
-                                        #                Y_filler3.append(int(line.split(',')[2]))    
-                                         #               Y3 = []
-                                          #              for i in range(0, len(Y_filler3)):
-                                           #                 if i == 0:
-                                            #                    Y3.append(Y_filler3[i])
-                                             #               else:
-                                              #                  Y3.append(Y3[i - 1] + Y_filler3[i])
-                                               #                 X4, Y_filler4 = [], []
-                                                #                with open("BF3vertex.txt") as bf3file:
-                                                 #                   for line in bf3file:
-                                                  #                      X4.append(int(line.split(',')[0]))
-                                                   #                     Y_filler4.append(int(line.split(',')[2]))    
-                                                    #                    Y4 = []
-                                                     #                   for i in range(0, len(Y_filler4)):
-                                                      #                      if i == 0:
-                                                       #                         Y4.append(Y_filler4[i])
-                                                        #                    else:
-                                                         #                       Y4.append(Y4[i - 1] + Y_filler4[i])
-                                                          #                      
-                                                           #                     plt.plot(X, Y, color='blue')
-                                                            #                    plt.plot(X, X, color='green')
-                                                             #                   plt.plot(X2, Y2, color='red')
-                                                              #                  plt.plot(X3, Y3, color = 'purple')
-                                                               #                 plt.plot(X4, Y4, color='black')
-                                                                #                plt.show()
-                                                                                
+def draw_graphs(partition_count, imbal, slack_val, matrix, mb_size, hash_count):
+    X, Y_filler = [], []
+    with open("N2Pvertex.txt") as n2pfile:
+        for line in n2pfile:
+            if '@' in line or '%' in line:
+                continue
+            else:        
+                X.append(int(line.split(',')[0]))
+                Y_filler.append(int(line.split(',')[2]))    
+        Y = []
+        for i in range(0, len(Y_filler)):
+            if i == 0:
+                Y.append(Y_filler[i])
+            else:
+                Y.append(Y[i - 1] + Y_filler[i])
+    X2, Y2_filler = [], []
+    with open("BFvertex.txt") as bffile:
+        for line in bffile:
+            if '@' in line or '%' in line:
+                continue
+            else:        
+                X2.append(int(line.split(',')[0]))
+                Y2_filler.append(int(line.split(',')[2]))    
+        Y2 = []
+        for i in range(0, len(Y2_filler)):
+            if i == 0:
+                Y2.append(Y2_filler[i])
+            else:
+                Y2.append(Y2[i - 1] + Y2_filler[i])
+    X3, Y3_filler = [], []
+    with open("BF2vertex.txt") as bf2file:
+        for line in bf2file:
+            if '@' in line or '%' in line:
+                continue
+            else:        
+                X3.append(int(line.split(',')[0]))
+                Y3_filler.append(int(line.split(',')[2]))    
+        Y3 = []
+        for i in range(0, len(Y3_filler)):
+            if i == 0:
+                Y3.append(Y3_filler[i])
+            else:
+                Y3.append(Y3[i - 1] + Y3_filler[i])
+    X4, Y4_filler = [], []
+    with open("BF3vertex.txt") as bf3file:
+        for line in bf3file:
+            if '@' in line or '%' in line:
+                continue
+            else:        
+                X4.append(int(line.split(',')[0]))
+                Y4_filler.append(int(line.split(',')[2]))    
+        Y4 = []
+        for i in range(0, len(Y4_filler)):
+            if i == 0:
+                Y4.append(Y3_filler[i])
+            else:
+                Y4.append(Y3[i - 1] + Y4_filler[i])
+    plt.plot(X,Y,label='N2P')
+    plt.plot(X2,Y2,label='BF1')
+    plt.plot(X3,Y3,label='BF2')
+    plt.plot(X4,Y4,label='BF3')
+    plt.legend()
+    plt.show()
+
 def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_val, randomization_count, byte_size = -1, hash_count = -1):
     if int(algorithm) == 2:
         name = "N2P"
@@ -135,34 +132,52 @@ if __name__ == "__main__":
     if(len(sys.argv)) == 1:
         print("pc, imbal, slack_val, dir, mb_size, hc, n2p_k, rc")
         exit()
-    elif(len(sys.argv)) <= 7:
-        print("Missing input parameter(s).")
-        exit()    
-    algorithms = ["2", "3", "4", "5", "6"]
-    partition_count = sys.argv[1]
-    imbal = sys.argv[2]
-    slack_val = sys.argv[3]
-    directory = sys.argv[4]
-    mb_size = sys.argv[5]
-    hash_count = sys.argv[6]
-    k = sys.argv[7]
-    rc = sys.argv[8]
-    files = [f.split(".", 1)[0] for f in listdir(directory) if isfile(join(directory, f))]
-    matrices = []
-    threads = []
-    for file in files:
-        if file not in matrices:
-            matrices.append(file)
-    for matrix in matrices:
+    elif sys.argv[1] == "-g" and len(sys.argv) == 2:
+        print("pc, imbal, slack_val, matrix, mb_size, hc, n2p_k")
+        exit()
+    if sys.argv[1] == "-g" and len(sys.argv) > 8:
+        algorithms = ["2", "3", "4", "5", "6"]
+        partition_count = sys.argv[2]
+        imbal = sys.argv[3]
+        slack_val = sys.argv[4]
+        matrix = sys.argv[5]
+        mb_size = sys.argv[6]
+        hash_count = sys.argv[7]
+        k = sys.argv[8]
+        threads = []
         for algorithm in algorithms:
             if int(algorithm) == 4 or int(algorithm) == 5 or int(algorithm) == 6:
-                partitioner = threading.Thread(target=start_bf_partitioning, args=(algorithm, partition_count, imbal, slack_val, directory + "/" + matrix, rc, mb_size, hash_count))
+                partitioner = threading.Thread(target=start_bf_partitioning, args=(algorithm, partition_count, imbal, slack_val, matrix, "1", mb_size, hash_count))
                 threads.append(partitioner)
                 partitioner.start()
             else:
-                partitioner = threading.Thread(target=start_partitioning, args=(algorithm, partition_count, imbal, slack_val, directory + "/" + matrix, rc, k))
+                partitioner = threading.Thread(target=start_partitioning, args=(algorithm, partition_count, imbal, slack_val, matrix, "1", k))
                 threads.append(partitioner)
                 partitioner.start()
-    for thread in threads:
-        thread.join()
-    #draw_graphs(algorithms, partition_count, imbal, slack_val, mb_size, hash_count)
+        for thread in threads:
+            thread.join()
+        draw_graphs(partition_count, imbal, slack_val, matrix, mb_size, hash_count)
+    elif sys.argv[1] != "-g" and len(sys.argv) > 8:
+        algorithms = ["2", "3", "4", "5", "6"]
+        partition_count = sys.argv[1]
+        imbal = sys.argv[2]
+        slack_val = sys.argv[3]
+        directory = sys.argv[4]
+        mb_size = sys.argv[5]
+        hash_count = sys.argv[6]
+        k = sys.argv[7]
+        rc = sys.argv[8]
+        files = [f.split(".", 1)[0] for f in listdir(directory) if isfile(join(directory, f))]
+        matrices = []
+        for file in files:
+            if file not in matrices:
+                matrices.append(file)
+                for matrix in matrices:
+                    for algorithm in algorithms:
+                        if int(algorithm) == 4 or int(algorithm) == 5 or int(algorithm) == 6:
+                            partitioner = threading.Thread(target=start_bf_partitioning, args=(algorithm, partition_count, imbal, slack_val, directory + "/" + matrix, rc, mb_size, hash_count))
+                            partitioner.start()
+                        else:
+                            partitioner = threading.Thread(target=start_partitioning, args=(algorithm, partition_count, imbal, slack_val, directory + "/" + matrix, rc, k))
+                            partitioner.start()
+                            
