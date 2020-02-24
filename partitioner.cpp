@@ -531,42 +531,42 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       auto start = std::chrono::high_resolution_clock::now();
       this->LDGn2p(partitionCount, slackValue, seed, imbal);
       auto end = std::chrono::high_resolution_clock::now();
-      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
   else if(algorithm == 3)
     {
       auto start = std::chrono::high_resolution_clock::now();
       this->LDGn2p_i(partitionCount, slackValue, seed, imbal, i);
       auto end = std::chrono::high_resolution_clock::now();
-      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
   else if(algorithm == 4)
     {
       auto start = std::chrono::high_resolution_clock::now();
       this->LDGBF(partitionCount, slackValue, seed, imbal);
       auto end = std::chrono::high_resolution_clock::now();
-      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
   else if(algorithm == 5)
     {
       auto start = std::chrono::high_resolution_clock::now();
       this->LDGBF2(partitionCount, slackValue, seed, imbal, byteSize, hashCount);
       auto end = std::chrono::high_resolution_clock::now();
-      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
   else if(algorithm == 6)
     {
       auto start = std::chrono::high_resolution_clock::now();
       this->LDGBF3(partitionCount, slackValue, seed, imbal, byteSize, hashCount);
       auto end = std::chrono::high_resolution_clock::now();
-      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
 else if(algorithm == 7)
     {
       auto start = std::chrono::high_resolution_clock::now();
       this->LDGBF4MULTI(partitionCount, slackValue, seed, imbal, byteSize, hashCount, noLayers);
       auto end = std::chrono::high_resolution_clock::now();
-      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
   
   //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
@@ -602,6 +602,7 @@ void Partitioner::RandomPartition(int partitionCount, int seed)
       int partition = distribution(generator);
       sizeArray[partition] += 1;
       partVec[i] = partition;
+      calculateCuts3(partitionCount, i);
     }
   
   for(int i = 0; i < partitionCount; i++){
@@ -610,6 +611,7 @@ void Partitioner::RandomPartition(int partitionCount, int seed)
   
   std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
   
+  this->vertexOutput(0, seed);
   delete[] sizeArray;
 }
 
@@ -1227,7 +1229,7 @@ void Partitioner::LDGBF4MULTI(int partitionCount, int slackValue, int seed, doub
 	}
       partVec[i] = maxIndex;
       sizeArray[maxIndex] += 1;
-      
+      calculateCuts3(partitionCount, i);
       for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
 	{
 	  int edge = this->reverse_sparseMatrix[k];
@@ -1314,8 +1316,9 @@ void Partitioner::LDGMultiBF()
 void Partitioner::vertexOutput(int algorithm, int seed)
 {
   string textName;
-  
-  if(algorithm == 1)
+  if(algorithm == 0)
+    textName = "RANDOMvertex.txt";
+  else if(algorithm == 1)
     textName = "P2Nvertex.txt";
   else if(algorithm == 2)
     textName = "N2Pvertex.txt";

@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
       std::cout << "If Alg is BF:\n";
       std::cout << "arg7: Byte size\n";
       std::cout << "arg8: Hash Count\n";
+      std::cout << "arg9: Layer count(if alg = 7)\n";
       std::cout << "--------------------\n";
       std::cout << "If Alg is N2Pi:\n";
       std::cout << "arg7: i\n";
