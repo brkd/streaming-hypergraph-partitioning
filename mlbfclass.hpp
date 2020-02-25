@@ -37,7 +37,7 @@ public:
       filter_in_layer *= 2;
       
       for(int f = 0; f < filter_in_layer; f++){
-      bf_heap[filter_ctr] = new BloomFilter_OT(layer_size/pow(2,i), HASH_COUNT, i);
+      bf_heap[filter_ctr] = new BloomFilter_OT(layer_size/pow(2,i)*8, HASH_COUNT, i);
       //std::cout << "Filter no: " << filter_ctr <<" with size: " << layer_size/pow(2,i) << std::endl;
       filter_ctr++;
       }
