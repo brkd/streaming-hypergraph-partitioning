@@ -4,7 +4,9 @@
 #include "bloomclass.h"
 #include "bf_2.hpp"
 #include "bf_3.hpp"
+#include "bf_4.hpp"
 #include "mlbfclass.hpp"
+#include "mlbfclass_2.hpp"
 #include <vector>
 #include <string>
 
@@ -46,6 +48,7 @@ class Partitioner
   void LDGBF2(int, int, int, double, int, int);
   void LDGBF3(int, int, int, double, int, int);
   void LDGBF4MULTI(int, int, int, double, int, int, int);
+  void LDGBF5MULTI(int, int, int, double, int, int, int);
   void LDGMultiBF();
   
   void vertexOutput(int, int);
@@ -59,6 +62,7 @@ class Partitioner
   int BFConnectivity2(BloomFilter* bf, int, int);
   int BFConnectivity3(BloomFilter_OT* bf, int, int);
   int BFConnectivityMult(mlbf* bf, int, int);
+  void BFConnectivityMult2(mlbf_2* bf, bool*, int*, int, int);
  public:
   //Constructors
   Partitioner(std::string);
