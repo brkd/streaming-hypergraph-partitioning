@@ -9,8 +9,10 @@ import sys
 import csv
 
 csv_header = ["Algorithm", "rt(s)", "avg_cut", "max_cut", "min_cut", "slack", "imbal", "mb size", "hash", "part-count", "max_SD", "min_SD", "run_count", "spec_param"]
-output_files = ["RANDOMvertex.txt", "N2Pvertex.txt", "N2P_Kvertex.txt", "BFvertex.txt", "BF2vertex.txt", "BF3vertex.txt", "BF4MULTIvertex.txt"]
+output_files = ["N2Pvertex.txt", "N2P_Kvertex.txt", "BFvertex.txt", "BF2vertex.txt", "BF3vertex.txt", "BF4MULTIvertex.txt"]
+line_styles = ['-', '--', '-.', ':']
 def draw_graphs(partition_count, imbal, slack_val, matrix, mb_size, hash_count):    
+    style = 0
     for file_name in output_files:
         with open(file_name) as n2pfile:
             X, Y_filler = [], []
@@ -26,8 +28,13 @@ def draw_graphs(partition_count, imbal, slack_val, matrix, mb_size, hash_count):
                     Y.append(Y_filler[i])
                 else:
                     Y.append(Y[i - 1] + Y_filler[i])
-            plt.plot(X,Y,label=file_name.split("vertex"))[0]
+                plt.plot(X,Y,label=file_name.split("vertex")[0], linestyle=line_styles[style % len(line_styles)])
+                style+=1
+    plt.xlabel('Partitioned Vertex Count')
+    plt.ylabel('Cuts')
     plt.legend()
+    plt.savefig('example.png')
+    print("Graph saved as example.png")
     plt.show()
 
 def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_val, randomization_count, byte_size = -1, hash_count = -1, spec_param = -1):
