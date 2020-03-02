@@ -1,6 +1,6 @@
 #include <tgmath.h>
 
-class mlbf{
+class mlbf_2{
   
 private:
   int num_layers;
@@ -9,10 +9,10 @@ private:
   int layer_size;
   int num_filters;
   int hash_count;
-  BloomFilter_OT** bf_heap;
+  BloomFilter_OT_OV** bf_heap;
   
 public:
-  mlbf(int NUM_LAYERS, int NUM_PARTITIONS, int HASH_COUNT, int NO_BYTES){
+  mlbf_2(int NUM_LAYERS, int NUM_PARTITIONS, int HASH_COUNT, int NO_BYTES){
     hash_count = HASH_COUNT;
     byte_size = NO_BYTES;
     num_layers = NUM_LAYERS;
@@ -27,7 +27,7 @@ public:
       
     }
     
-    bf_heap = new BloomFilter_OT*[num_filters+1];
+    bf_heap = new BloomFilter_OT_OV*[num_filters+1];
     
     int filter_ctr = 1;
     int filter_in_layer = 1;
@@ -37,14 +37,14 @@ public:
       filter_in_layer *= 2;
       
       for(int f = 0; f < filter_in_layer; f++){
-      bf_heap[filter_ctr] = new BloomFilter_OT(layer_size/pow(2,i)*8, HASH_COUNT, i);
-      //std::cout << "Filter no: " << filter_ctr <<" with size: " << layer_size/pow(2,i) << std::endl;
-      filter_ctr++;
+	bf_heap[filter_ctr] = new BloomFilter_OT_OV(layer_size/pow(2,i)*8, HASH_COUNT, i);
+	//std::cout << "Filter no: " << filter_ctr <<" with size: " << layer_size/pow(2,i) << std::endl;
+	filter_ctr++;
       }
     }
   }
   
-    ~mlbf(){
+    ~mlbf_2(){
       delete[] bf_heap;
     }
   
@@ -116,19 +116,19 @@ public:
       
       if(num_layers == 1){
 	//std::cout << "Part: " << part << "-->Inserting filter num: " << filter_num << std::endl;
-	bf_heap[filter_num]->insert(edge, part);
+	bf_heap[filter_num]->insert(edge);
 	return true;
       }
       
       else if(recursive_insert(layer+1, r_child, range, edge, part)){
 	//std::cout << "Inserting filter num: " << filter_num << std::endl;
-	bf_heap[filter_num]->insert(edge, part);
+	bf_heap[filter_num]->insert(edge);
 	return true;
       }
     }
     
     if(layer == num_layers){
-      bf_heap[child]->insert(edge, part);
+      bf_heap[child]->insert(edge);
       //std::cout << "Part: " << part << " start: " << range[0] << " end: " << range[1] << std::endl;
       //std::cout << "Insert: Part " << part << " chose filter no: " << child <<std::endl;
       return true;
@@ -156,7 +156,7 @@ public:
     }
     
     if(recursive_insert(layer+1, r_child, r_range, edge, part)){
-      bf_heap[child]->insert(edge, part);
+      bf_heap[child]->insert(edge);
       return true;
     }   
     
@@ -168,7 +168,7 @@ public:
     bool status = recursive_insert(1, 0, range, edge, part); //Start from layer 1
     //std::cout << "Status: " << status << std::endl;
   }
-
+  /*
   bool recursive_query(int edge, int part, int child, int layer, int* range){
     
     if(layer == num_layers){
@@ -205,7 +205,7 @@ public:
 
   }
 
-  bool query(int edge, int part){
+   bool query(int edge, int part){
     
     int location_in_heap = -1;
     
@@ -222,6 +222,57 @@ public:
     
     
   }
+  */
 
+
+  bool recursive_insert(int child, int edge, int layer){
+    
+
+
+  }
+  
+  void insert(int edge){
+    recursive_insert(1, edge, 1);
+    recursive_insert(2, edge, 1);
+  }
+
+  void recursive_query(int child, int edge, bool* existences, int  layer){
+    //Hardcoded for 2 children per node
+    
+    if(bf_heap[child]->query(edge)){
+      
+      
+      if(layer == num_layers){
+	int leaf_offset = 0;
+	for(int i = 0; i < layer; i++){
+	  leaf_offset += pow(2,i);
+	}
+	
+	int leaf_size = num_partitions/pow(2,layer);
+	int order = child-leaf_offset;
+	existences[order] = true;
+	
+	/*
+	  int start = order*leaf_size;
+	  int end = (order+1)*leaf_size;
+	  
+	  for(int r = start; r < end; r++){
+	  existences[r] = true;
+	  } 
+	*/
+	return;
+      }
+      
+      for(int i = 1; i <=2; i++){
+	recursive_query((child*2)+i, edge, existences, layer+1);
+      }
+    }
+    return;
+  }
+
+  void query(int edge, bool* existences){
+    recursive_query(1, edge, existences, 1);
+    recursive_query(2, edge, existences, 1);
+  }
    
 };

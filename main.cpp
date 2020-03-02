@@ -1,5 +1,5 @@
 #include "partitioner.cpp"
-
+#define MBYTE 1000000
 int main(int argc, char** argv) {
 
   if (argc == 1)
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
       
       int algorithm = atoi(argv[1]);
       
-      if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4 && algorithm != 5 && algorithm != 6 && algorithm != 7) {
+      if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4 && algorithm != 5 && algorithm != 6 && algorithm != 7 && algorithm != 8) {
 	std::cout << "wrong algorithm" << endl;
 	exit(1);
       }
@@ -85,11 +85,11 @@ int main(int argc, char** argv) {
 	  int num_layer;
 	  Partitioner* partitioner;
 	  
-	  if (algorithm == 4 || algorithm == 5 || algorithm == 6 || algorithm == 7)
+	  if (algorithm == 4 || algorithm == 5 || algorithm == 6 || algorithm == 7 || algorithm == 8)
 	    {
 	      if (argc > 8)
 		{
-		  byteSize = atoi(argv[7]);
+		  byteSize = atoi(argv[7]) * MBYTE;
 		  hashCount = atoi(argv[8]);
 		  if (argc > 9)
 		    num_layer = atoi(argv[9]);

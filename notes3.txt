@@ -1,0 +1,34 @@
+-> Patoh kurup offline streamer'lar nasılmış diye bakalım
+-> Algoritma 7 DOLAP'ı kapatıyor. O kodu saklayalım, pcg'ye verelim sonra.
+-> Min-max'a bakalım.(Maximum load'u minimize etme)
+-> LSH
+   -> Vertex geliyor
+   -> Netleri bir set
+   -> Bu set'in permutasyonlarına bakıp ((v, e) permutasyonlarına) hashle, büyük bir p ile modla, en küçüğü seç.
+-> LDG memory consumption'ı -> (toplam_cut + n) * byte
+-> 1 milyar vertex'li graph istiyoruz: SuiteSparse 100 milyon nonzero üstü, 50 milyon row üstü
+   -> Hoca screenshot attı
+   -> Deneyleri bu graphlar üstünde alalım
+-> social network özellikle istiyoruz(bunlar biraz daha küçük olabilir)
+-> MOLIERE2016'yı bi alalım, 6 milyar non-zero // Bunu ignore etsek daha iyi
+
+//-> Büyük graph'a geçeeğimiz için 32 bit addressing'in hepsi lazım. size_t ile çaalışabilir.
+
+-> LDG[i]'ye de bir tur yoğunlaşıcaz
+-> Cutlar için her algoritmayla clustered bar lazım
+-> Deneyler alıcaz, olanların yanında PaToH ve random.
+   -> 1 milyarın üzerindeki graph'lar için sonuç alıcaz(10 tane)
+   -> LDG[i] için 1,2,3 parametreleriyle
+   -> Her matrix için 3 chart
+      -> Ne kadar hafıza, ne kadar cut, run-time
+      -> 4096 part'ı ignore'luyoruz
+
+-> Alg8 random'ı uniform olmalı
+
+
+->Bloom filter hariç non-zero'su 1 milyarı geçen bütün sonuçlar haftaya hazır olsun.
+
+---***---
+-> Refinement bakılacak yetişirse
+-> Cut yaratan vertexleri buffer'a koyup onları refine'lama olabilir
+-> 

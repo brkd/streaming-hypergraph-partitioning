@@ -561,10 +561,17 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
-else if(algorithm == 7)
+  else if(algorithm == 7)
     {
       auto start = std::chrono::high_resolution_clock::now();
       this->LDGBF4MULTI(partitionCount, slackValue, seed, imbal, byteSize, hashCount, noLayers);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
+    }
+  else if(algorithm == 8)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LDGBF5MULTI(partitionCount, slackValue, seed, imbal, byteSize, hashCount, noLayers);
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
@@ -1258,6 +1265,127 @@ void Partitioner::LDGBF4MULTI(int partitionCount, int slackValue, int seed, doub
   delete[] sizeArray;
 }
 
+
+///////ENHANCED MULTI LAYER +9 GODLY////////
+void Partitioner::LDGBF5MULTI(int partitionCount, int slackValue, int seed, double imbal, int byteSize, int hashCount, int noLayers)
+{
+  mlbf_2* bf = new mlbf_2(noLayers, partitionCount, hashCount, byteSize);
+  int no_leaf_blocks = pow(2, noLayers);
+  int leaf_block_size = partitionCount/no_leaf_blocks;
+  bool* existences = new bool[no_leaf_blocks];
+  //
+  int* connectivities = new int[no_leaf_blocks];
+  //
+  std::pair<int, int>* ranges = new std::pair<int,int>[no_leaf_blocks];
+  for(int i = 0; i < no_leaf_blocks; i++){
+    int start = i*leaf_block_size;
+    int end = (i+1)*leaf_block_size;
+    ranges[i].first = start;
+    ranges[i].second = end;
+  }
+  std::cout << "Initialized" << std::endl;
+
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+    }
+  
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+    {
+      readOrder.push_back(i);
+    }
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  
+  double capacityConstraint;
+  int currVertexCount = 0;
+  for (int i : readOrder)
+    {
+
+      for(int re = 0; re < no_leaf_blocks; re++){
+	connectivities[re] = 0;
+      }
+      
+      
+      if((imbal*currVertexCount) >= slackValue)
+	capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      else
+	capacityConstraint = ((double)slackValue) / partitionCount;
+      
+      double maxScore = -1.0;
+      int maxIndex = -1;
+      
+      //int connectivity = this->BFConnectivityMult2(bf, existences, connectivities, i);
+      this->BFConnectivityMult2(bf, existences, connectivities, no_leaf_blocks, i);
+
+      
+      for(int j = 0; j < no_leaf_blocks; j++){
+	int connectivity = connectivities[j];
+	
+	
+	int average_size = 0;
+	for(int ps = ranges[j].first; ps < ranges[j].second; ps++){
+	  average_size += sizeArray[ps];
+	}
+
+	average_size /= leaf_block_size;
+	
+	double partToCapacity = average_size / capacityConstraint;
+
+	double penalty = 1 - partToCapacity;
+	double score = penalty * connectivity;
+	
+	
+      if (score > maxScore)
+	{
+	  maxScore = score;
+	  maxIndex = j;
+	}
+      else if (score == maxScore)
+	{
+	  if (sizeArray[j] < sizeArray[maxIndex])
+	    {
+	      maxIndex = j;
+	    }
+	}
+      }
+      int part = rand() % leaf_block_size + (maxIndex*leaf_block_size);
+      partVec[i] = part;
+      sizeArray[part] += 1;
+      calculateCuts3(partitionCount, i);
+      for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
+	{
+	  int edge = this->reverse_sparseMatrix[k];
+	  bf->insert(edge, part);
+	}
+      
+      currVertexCount++;
+      
+#ifdef WATCH
+      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+      
+      
+      
+    }
+  
+  std::cout << std::endl;
+  
+  std::cout << "******PART SIZES*******" << std::endl;
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  }
+  
+  delete[] sizeArray;
+  delete[] existences;
+  delete[] connectivities;
+}
+
+
 void Partitioner::LDGMultiBF()
 {
   /*	int* sizeArray = new int[this->partitionCount];
@@ -1508,8 +1636,27 @@ int Partitioner::BFConnectivityMult(mlbf* bloomFilter, int partitionID, int vert
     }
   
   return connectivityCount;
-}  
+}
 
+void Partitioner::BFConnectivityMult2(mlbf_2* bloomFilter, bool* existences, int* connectivities, int no_leaf_blocks, int vertex)
+{
+  for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++){
+
+    int edge = reverse_sparseMatrix[k];
+    
+    for(int i = 0; i < no_leaf_blocks; i++){
+      existences[i] = false;
+    }
+    
+    bloomFilter->query(edge, existences);
+    
+    for(int i = 0; i < no_leaf_blocks; i++){
+      if(existences[i])
+	connectivities[i] += 1;
+    }
+    
+  }  
+}
 int Partitioner::calculateCuts2(int partitionCount)
 {
   int cuts = 0;
