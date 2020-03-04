@@ -13,7 +13,9 @@ int main(int argc, char** argv) {
       std::cout << "4 - BF\n";
       std::cout << "5 - BF2\n";
       std::cout << "6 - BF3\n";
-      std::cout << "7 - Multilayer BF\n";
+      std::cout << "7 - BF4(MULTI)\n";
+      std::cout << "8 - BF5(MULTI)\n";
+      std::cout << "9 - MinMax\n";
       std::cout << "--------------------\n";
       std::cout << "arg2: Partition Count\n";
       std::cout << "arg3: Imbalance\n";
@@ -59,12 +61,14 @@ int main(int argc, char** argv) {
       if (algorithm == 0)
 	{
 	  fileName = argv[3];
-	  randomizationCount = atoi(argv[4]);
+	  double imbal = atof(argv[4]);
+	  int slack = atoi(argv[5]);
+	  randomizationCount = atoi(argv[6]);
 	  Partitioner randomPartitioner(fileName);
 	  
 	  for (int i = 0; i < randomizationCount; i++)
 	    {
-	      randomPartitioner.RandomPartition(partitionCount, i);
+	      randomPartitioner.RandomPartition(partitionCount, i, imbal, slack);
 	    }
 	}
       else

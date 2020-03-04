@@ -29,9 +29,9 @@ class Partitioner
   int* cutArray;
   
   int partitionCount;
-  int vertexCount;
-  int edgeCount;
-  int nonzeroCount;
+  size_t vertexCount;
+  size_t edgeCount;
+  size_t nonzeroCount;
   int byteSize;
   int hashCount;
   bool symmetry;
@@ -50,6 +50,9 @@ class Partitioner
   void LDGBF4MULTI(int, int, int, double, int, int, int);
   void LDGBF5MULTI(int, int, int, double, int, int, int);
   void LDGMultiBF();
+  void LSH(int,double);
+  void MinMax(int,int,int,double);
+  
   
   void vertexOutput(int, int);
   int calculateCuts(int);
@@ -79,6 +82,6 @@ class Partitioner
   
   //Methods
   void partition(int, int, int, int, double, int, int);
-  void RandomPartition(int, int);
+  void RandomPartition(int, int, double, int);
 };
 #endif

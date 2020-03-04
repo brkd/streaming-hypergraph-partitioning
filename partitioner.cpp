@@ -66,6 +66,7 @@ Partitioner::Partitioner(std::string fileName){
     fclose(bp);
     this->read_binary_graph(bin_name);
   }
+  std::cout << "Size_info:" << this->vertexCount << ":" << this->edgeCount << ":" << this->nonzeroCount << std::endl;
   this->cutArray = new int[this->vertexCount];
   this->partVec = new int[this->vertexCount];
   for(int i = 0; i < vertexCount; i++)
@@ -80,9 +81,9 @@ Partitioner::Partitioner(std::string fileName){
   FILE* bp;
   bp = fopen(fname, "r");
   
-  int* nov = new int;
-  int* nnet = new int;
-  int* nnz = new int;
+  size_t* nov = new size_t;
+  size_t* nnet = new size_t;
+  size_t* nnz = new size_t;
   
   fread(nov, sizeof(int), 1, bp);
   this->vertexCount = *nov;
@@ -134,14 +135,20 @@ Partitioner::Partitioner(std::string fileName){
   fclose(bp);
   }
 
-bool sortbyfirst(const pair<int,int> &a, const pair<int,int> &b) 
+bool sortbyfirst_and_sec(const pair<int,int> &a, const pair<int,int> &b) 
 { 
-  return (a.first < b.first); 
+  if(a.first != b.first)
+    return a.first < b.first;
+  else
+    return a.second < b.second;
 } 
 
-bool sortbysec(const pair<int,int> &a, const pair<int,int> &b) 
+bool sortbysec_and_first(const pair<int,int> &a, const pair<int,int> &b) 
 { 
-  return (a.second < b.second); 
+  if(a.second != b.second)
+    return a.second < b.second;
+  else
+    return a.first < b.first;
 } 
 
 void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
@@ -268,8 +275,8 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     }
     
     std::cout << "Sorting.. " << std::endl;
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst_and_sec);
+    //std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
     
     no_nets = &intermediate[intermediate.size()-1].second;
     adj = new int[intermediate.size()];
@@ -301,8 +308,8 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 
     //REVERSE ORDER
     std::cout << "Reverse sorting.. " << std::endl;
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec_and_first);
+    //std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
 
 #ifdef DEBUG
     std::cout << "AFTER REVERSE SORTING, INTERMEDIATE: " << std::endl;
@@ -382,8 +389,8 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     }
     
     std::cout << "Sorting.. " << std::endl;
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst_and_sec);
+    //std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
 
         
     for(int i = 0; i < intermediate.size(); i++){
@@ -426,8 +433,8 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     
     //REVERSE ORDER
     std::cout << "Reverse sorting.. " << std::endl;
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec_and_first);
+    //std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
 
     no_vertex = &intermediate[intermediate.size()-1].first;
     reverse_adj = new int[intermediate.size()];
@@ -575,6 +582,14 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
+  else if(algorithm == 9)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->MinMax(partitionCount, slackValue, seed, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
+    }
+
   
   //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
   std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
@@ -585,7 +600,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
 }
 
 //ALGO 0//
-void Partitioner::RandomPartition(int partitionCount, int seed)
+void Partitioner::RandomPartition(int partitionCount, int seed, double imbal, int slack)
 {
   int* sizeArray = new int[partitionCount];
   for (int i = 0; i < partitionCount; i++)
@@ -603,13 +618,21 @@ void Partitioner::RandomPartition(int partitionCount, int seed)
     }
   std::srand(seed);
   std::random_shuffle(readOrder.begin(), readOrder.end());
-  
+  int currVertexCount = 0;
+  double capacityConstraint;
   for (int i : readOrder)
     {
+      if((imbal*currVertexCount) >= slack)
+	capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      else
+	capacityConstraint = ((double)slack) / partitionCount;      
       int partition = distribution(generator);
+      while(sizeArray[partition] >= capacityConstraint)
+	partition = distribution(generator);
       sizeArray[partition] += 1;
       partVec[i] = partition;
       calculateCuts3(partitionCount, i);
+      currVertexCount++;
     }
   
   for(int i = 0; i < partitionCount; i++){
@@ -816,7 +839,10 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
-
+  for(int i = 0; i < netToPartition.size(); i++)
+    {
+      delete netToPartition[i];
+    }
   delete[] sizeArray;
   delete[] indexArray;
   delete[] markerArray;
@@ -925,7 +951,10 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
-  
+  for(int i = 0; i < netToPartition.size(); i++)
+    {
+      delete netToPartition[i];
+    }
   delete[] sizeArray;
   delete[] indexArray;
   delete[] markerArray;
@@ -1439,6 +1468,98 @@ void Partitioner::LDGMultiBF()
 	//Might use a stack in order not to skip partitions
 	//Insertion?
 	*/
+}
+
+void Partitioner::MinMax(int partitionCount, int SLACK, int seed, double imbal)
+{
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+      //std::cout << "SIZE ARRAY[i]:" << sizeArray[i] << std::endl;
+    }
+  
+  //Generate random read order
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+    {
+      readOrder.push_back(i);
+    }
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+
+  std::vector<std::vector<int>> partitionToNet(partitionCount); 
+
+  int currVertexCount = 0;
+  double capacityConstraint;
+  for (int i : readOrder)
+    {
+       if((imbal*currVertexCount) >= SLACK)
+        capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      else
+         capacityConstraint = ((double)SLACK) / partitionCount;
+
+      double maxScore = -1.0;
+      int maxIndex = -1;
+      
+      int minLoad = sizeArray[0];
+      for(int a = 1; a < partitionCount; a++)
+      {
+        if(sizeArray[a] < minLoad)
+          minLoad = sizeArray[a];
+      }
+
+for (int j = 0; j < partitionCount; j++)
+  {
+    if(sizeArray[j] <= minLoad + SLACK)
+      {
+        int connectivity = this->p2nConnectivity(j, i, partitionToNet);
+        double partOverCapacity = sizeArray[j] / capacityConstraint;
+        double penalty = 1 - partOverCapacity;
+        double score = penalty * connectivity;
+
+        if (score > maxScore)
+          {
+            maxScore = score;
+            maxIndex = j;
+          }
+        else if (score == maxScore && sizeArray[j] < sizeArray[maxIndex])
+          {
+            maxIndex = j;
+          }
+      }
+  }
+      partVec[i] = maxIndex;
+      sizeArray[maxIndex] += 1;
+      calculateCuts3(partitionCount, i);
+      int maxIndexSize = partitionToNet[maxIndex].size() - 1;
+
+
+  for (int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+  {
+    if(std::find (partitionToNet[maxIndex].begin(), partitionToNet[maxIndex].end(), this->sparseMatrix[k]) == partitionToNet[maxIndex].end())
+      partitionToNet[maxIndex].push_back(this->sparseMatrix[k]);
+  }
+
+      currVertexCount++;
+      
+#ifdef WATCH
+      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+#endif
+      
+    }
+  
+  std::cout << std::endl;
+  std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
+  std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
+  std::cout << "******PART SIZES*******" << std::endl;
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  }
+  
+  delete[] sizeArray;
 }
 
 void Partitioner::vertexOutput(int algorithm, int seed)
