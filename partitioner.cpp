@@ -149,6 +149,16 @@ bool sortbysec_and_first(const pair<int,int> &a, const pair<int,int> &b)
     return a.second < b.second;
   else
     return a.first < b.first;
+}
+
+bool sortbyfirst(const pair<int,int> &a, const pair<int,int> &b) 
+{
+  return a.first < b.first;
+}
+
+bool sortbysec(const pair<int,int> &a, const pair<int,int> &b) 
+{ 
+  return a.second < b.second;
 } 
 
 void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
@@ -275,26 +285,23 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     }
     
     std::cout << "Sorting.. " << std::endl;
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst_and_sec);
-    //std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
     
     no_nets = &intermediate[intermediate.size()-1].second;
     adj = new int[intermediate.size()];
     xadj = new int[no_col+1];
-    
     xadj[0] = 0;
     int current_net = 0;
     int xadj_cursor = 1;
     for(int i = 0; i < intermediate.size(); i++){
       adj[i] = intermediate[i].first;
-      
       if(intermediate[i].second != current_net){
 	xadj[xadj_cursor] = i;
 	xadj_cursor++;
 	current_net = intermediate[i].second;
       }
     }
-    
 #ifdef DEBUG
     for(int i = 0; i < 100; i ++){
       
@@ -308,8 +315,8 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 
     //REVERSE ORDER
     std::cout << "Reverse sorting.. " << std::endl;
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec_and_first);
-    //std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
 
 #ifdef DEBUG
     std::cout << "AFTER REVERSE SORTING, INTERMEDIATE: " << std::endl;
@@ -389,8 +396,8 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     }
     
     std::cout << "Sorting.. " << std::endl;
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst_and_sec);
-    //std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
 
         
     for(int i = 0; i < intermediate.size(); i++){
@@ -433,8 +440,8 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     
     //REVERSE ORDER
     std::cout << "Reverse sorting.. " << std::endl;
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec_and_first);
-    //std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
 
     no_vertex = &intermediate[intermediate.size()-1].first;
     reverse_adj = new int[intermediate.size()];
