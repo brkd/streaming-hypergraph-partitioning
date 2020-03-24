@@ -1,4 +1,4 @@
-#include "partitioner.h"
+ #include "partitioner.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -593,6 +593,13 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
     {
       auto start = std::chrono::high_resolution_clock::now();
       this->MinMax(partitionCount, slackValue, seed, imbal);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
+    }
+    else if(algorithm == 10)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      this->LSH(partitionCount, seed);
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
     }
@@ -1560,6 +1567,84 @@ for (int j = 0; j < partitionCount; j++)
   std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
+  std::cout << "******PART SIZES*******" << std::endl;
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  }
+  
+  delete[] sizeArray;
+}
+
+void Partitioner::LSH(int partitionCount, int seed)
+{
+  int* sizeArray = new int[partitionCount];
+  for (int i = 0; i < partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+      //std::cout << "SIZE ARRAY[i]:" << sizeArray[i] << std::endl;
+    }
+  
+  //Generate random read order
+  std::vector<int> readOrder;
+  for (int i = 0; i < this->vertexCount; i++)
+    {
+      readOrder.push_back(i);
+    }
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  int currVertexCount = 0;
+  for (int i : readOrder)
+  {
+    int hash1min = 4099;
+    int hash2min = 2053;
+    int hash3min = 1031;
+    int minnet1 = 0;
+    int minnet2 = 0;
+    int minnet3 = 0;
+    
+  	 for(int k = this->sparseMatrixIndex[i]; k < this->sparseMatrixIndex[i + 1]; k++)
+  	 {  
+  	 	int hash1 = (16 * this->sparseMatrix[k] + 25)%4099;
+  	 	int hash2 = (27 * this->sparseMatrix[k] + 49)%2053;
+  	 	int hash3 = (121 * this->sparseMatrix[k] + 169)%1031;
+
+  	 	if(hash1min > hash1)
+		{
+			hash1min = hash1;
+			minnet1 = this->sparseMatrix[k];
+		}
+
+		if(hash2min > hash2)
+		{
+			hash2min = hash2;
+			minnet2 = this->sparseMatrix[k];
+		}
+
+		if(hash3min > hash3)
+		{
+			hash3min = hash3;
+			minnet3 = this->sparseMatrix[k];
+		}
+  	 }
+
+  	 int part = (196 * minnet1 + 289 * minnet2 + 361 * minnet3 + 529)%partitionCount;
+  	 partVec[i] = part;
+  	 sizeArray[part] += 1;
+  	 calculateCuts3(partitionCount, i);
+
+  	 currVertexCount++;
+      
+	#ifdef WATCH
+      std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+	#endif
+
+  }
+  
+  std::cout << std::endl;
+  std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
+  std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << "-1" << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
   for(int i = 0; i < partitionCount; i++){

@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
       std::cout << "7 - BF4(MULTI)\n";
       std::cout << "8 - BF5(MULTI)\n";
       std::cout << "9 - MinMax\n";
+      std:cout << "10 - LSH\n";
       std::cout << "--------------------\n";
       std::cout << "arg2: Partition Count\n";
       std::cout << "arg3: Imbalance\n";
@@ -30,6 +31,8 @@ int main(int argc, char** argv) {
       std::cout << "--------------------\n";
       std::cout << "If Alg is N2Pi:\n";
       std::cout << "arg7: i\n";
+      std::cout <<"If Alg is LSH:\n";
+      std::cout <<"only give arg2, arg5 and arg6\n";
     }
   
   else
@@ -37,7 +40,7 @@ int main(int argc, char** argv) {
       
       int algorithm = atoi(argv[1]);
       
-      if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4 && algorithm != 5 && algorithm != 6 && algorithm != 7 && algorithm != 8) {
+      if (algorithm != 0 && algorithm != 1 && algorithm != 2 && algorithm != 3 && algorithm != 4 && algorithm != 5 && algorithm != 6 && algorithm != 7 && algorithm != 8 && algorithm != 9 && algorithm != 10) {
 	std::cout << "wrong algorithm" << endl;
 	exit(1);
       }
@@ -71,6 +74,19 @@ int main(int argc, char** argv) {
 	      randomPartitioner.RandomPartition(partitionCount, i, imbal, slack);
 	    }
 	}
+   else if (algorithm == 10)
+   {
+     fileName = argv[3];
+     randomizationCount = atoi(argv[4]);
+     
+     partitioner = new Partitioner(fileName);
+     for (int i = 0; i < randomizationCount; i++)
+	    {
+	      partitioner->partition(algorithm, partitionCount, 0, i + 1, 0, 0, randomizationCount);
+	    }
+	  
+	  delete partitioner;
+   }
       else
 	{
 	  double imbal = atof(argv[3]);

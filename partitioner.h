@@ -50,8 +50,9 @@ class Partitioner
   void LDGBF4MULTI(int, int, int, double, int, int, int);
   void LDGBF5MULTI(int, int, int, double, int, int, int);
   void LDGMultiBF();
-  void LSH(int,double);
+  //void LSH(int,double);
   void MinMax(int,int,int,double);
+  void LSH(int, int);
   
   
   void vertexOutput(int, int);

@@ -8,7 +8,7 @@ import subprocess
 import sys
 import csv
 
-csv_header = ["Algorithm", "rt(s)", "avg_cut", "max_cut", "min_cut", "slack", "imbal", "mb size", "hash", "part-count", "max_SD", "min_SD", "run_count", "spec_param"]
+csv_header = ["Algorithm", "avg_rt(s)", "avg_cut", "max_cut", "min_cut", "slack", "imbal", "mb size", "hash", "part-count", "max_SD", "min_SD", "run_count", "spec_param"]
 output_files = ["N2Pvertex.txt", "N2P_Kvertex.txt", "BFvertex.txt", "BF2vertex.txt", "BF3vertex.txt", "BF4MULTIvertex.txt"]
 line_styles = ['-', '--', '-.', ':']
 def draw_graphs(partition_count, imbal, slack_val, matrix, mb_size, hash_count):    
@@ -40,6 +40,18 @@ def draw_graphs(partition_count, imbal, slack_val, matrix, mb_size, hash_count):
 def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_val, randomization_count, byte_size = -1, hash_count = -1, spec_param = -1):
     name = matrix_name.split('/')[len(matrix_name.split('/')) - 1].replace(".*", "")
     csv_name = "Results/" + name + ".csv"
+    if algorithm == "0":
+        alg_name = "Random"
+    elif algorithm == "2":
+        alg_name = "N2P"
+    elif algorithm == "3":
+        alg_name = "N2P_" + str(spec_param) 
+    if algorithm == "5":
+        alg_name = "BF_Part_Count"
+    elif algorithm == "6":
+        alg_name = "Regular_BF"
+    elif algorithm == "8":
+        alg_name = "Multilayer_BF"
     with open(csv_name, "a+") as f:
         writer = csv.writer(f)
         size_vecs = []
@@ -70,26 +82,27 @@ def write_output(matrix_name, output, algorithm, partition_count, imbal, slack_v
         min_sd = ('%.2f'%min(devs))
         avg_cut = ('%.2f'%(sum(cuts) / len(cuts)))
         avg_rt = ('%.2f'%(sum(durations) / len(cuts)))
-        writer.writerow([algorithm, avg_rt, avg_cut, max_cut, min_cut, slack_val, imbal, byte_size, hash_count, partition_count, max_sd, min_sd, randomization_count, spec_param])            
+        writer.writerow([alg_name, avg_rt, avg_cut, max_cut, min_cut, slack_val, imbal, byte_size, hash_count, partition_count, max_sd, min_sd, randomization_count, spec_param])            
             
 def start_bf_partitioning(algorithm, partition_count, imbal, slack_val, matrix, randomization_count, mb_size, hash_count, num_layers):
-    if algorithm != "7":
+    if algorithm != "8":
         args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count, mb_size, hash_count)
     else:
         args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count, mb_size, hash_count, num_layers)
+    print(args)
     popen = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out = popen.stdout.read()
     if out != b'':
-        if algorithm != "7":
+        if algorithm != "8":
             write_output(matrix, out.decode('utf-8'), algorithm, partition_count, imbal, slack_val, randomization_count, mb_size, hash_count)
         else:
             write_output(matrix, out.decode('utf-8'), algorithm, partition_count, imbal, slack_val, randomization_count, mb_size, hash_count, num_layers)
 
 def start_partitioning(algorithm, partition_count, imbal, slack_val, matrix, randomization_count, k):
-    if algorithm != "3":
-        args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count)
     if algorithm == "0":
-        args = ("./main", algorithm, partition_count, matrix, randomization_count)
+        args = ("./main", algorithm, partition_count, matrix, imbal, slack_val, randomization_count)
+    elif algorithm != "3":
+        args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count)
     else:
         args = ("./main", algorithm, partition_count, imbal, slack_val, matrix, randomization_count, k)
     popen = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -101,12 +114,6 @@ def start_partitioning(algorithm, partition_count, imbal, slack_val, matrix, ran
             write_output(matrix, out.decode('utf-8'), algorithm, partition_count, imbal, slack_val, randomization_count, spec_param=k)
         
 if __name__ == "__main__":
-    if(len(sys.argv)) == 1:
-        print("pc, imbal, slack_val, dir, mb_size, hc, n2p_k, num_layers, rc")
-        exit()
-    elif sys.argv[1] == "-g" and len(sys.argv) == 2:
-        print("pc, imbal, slack_val, matrix, mb_size, hc, n2p_k, num_layers")
-        exit()
     if sys.argv[1] == "-g" and len(sys.argv) > 8:
         algorithms = ["2", "3", "4", "5", "6", "7"]
         partition_count = sys.argv[2]
@@ -130,17 +137,17 @@ if __name__ == "__main__":
         for thread in threads:
             thread.join()
         draw_graphs(partition_count, imbal, slack_val, matrix, mb_size, hash_count)
-    elif sys.argv[1] != "-g" and len(sys.argv) > 8:
-        algorithms = ["2", "3", "4", "5", "6", "7"]
-        partition_count = sys.argv[1]
-        imbal = sys.argv[2]
-        slack_val = sys.argv[3]
-        directory = sys.argv[4]
-        mb_size = sys.argv[5]
-        hash_count = sys.argv[6]
-        k = sys.argv[7]
-        num_layers = sys.argv[8]
-        rc = sys.argv[9]
+    elif sys.argv[1] != "-g":
+        algorithms = ["5", "6", "8"] # 0 2 3 5 6 8
+        partition_count = "64"
+        imbal = "1.1"
+        slack_val = "500"
+        directory = "/gandalf/data/Hyper/just_mtx/BFtest_mtx/"
+        mb_size = "30"
+        hash_count = "4"
+        k = "3"
+        num_layers = "4"
+        rc = "3"
         files = [f.split(".", 1)[0] for f in listdir(directory) if isfile(join(directory, f))]
         matrices = []
         for file in files:
@@ -148,7 +155,7 @@ if __name__ == "__main__":
                 matrices.append(file)
         for matrix in matrices:
             for algorithm in algorithms:
-                if int(algorithm) == 4 or int(algorithm) == 5 or int(algorithm) == 6 or int(algorithm) == 7:
+                if int(algorithm) == 4 or int(algorithm) == 5 or int(algorithm) == 6 or int(algorithm) == 8:
                     partitioner = threading.Thread(target=start_bf_partitioning, args=(algorithm, partition_count, imbal, slack_val, directory + matrix, rc, mb_size, hash_count, num_layers))
                     partitioner.start()
                 else:
