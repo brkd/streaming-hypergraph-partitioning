@@ -1,7 +1,7 @@
 #include "partitioner.cpp"
 #define MBYTE 1000000
 int main(int argc, char** argv) {
-
+  
   if (argc == 1)
     {
       std::cout << "--------------------\n";
@@ -74,19 +74,19 @@ int main(int argc, char** argv) {
 	      randomPartitioner.RandomPartition(partitionCount, i, imbal, slack);
 	    }
 	}
-   else if (algorithm == 10)
-   {
-     fileName = argv[3];
-     randomizationCount = atoi(argv[4]);
-     
-     partitioner = new Partitioner(fileName);
-     for (int i = 0; i < randomizationCount; i++)
+      else if (algorithm == 10)
+	{
+	  fileName = argv[3];
+	  randomizationCount = atoi(argv[4]);
+	  
+	  partitioner = new Partitioner(fileName);
+	  for (int i = 0; i < randomizationCount; i++)
 	    {
-	      partitioner->partition(algorithm, partitionCount, 0, i + 1, 0, 0, randomizationCount);
+	      partitioner->partition(algorithm, partitionCount, 0, i + 1, 0, 0, randomizationCount, 0);
 	    }
 	  
 	  delete partitioner;
-   }
+	}
       else
 	{
 	  double imbal = atof(argv[3]);
@@ -103,6 +103,7 @@ int main(int argc, char** argv) {
 	  int byteSize;
 	  int hashCount;
 	  int num_layer;
+	  int refSize = 0;
 	  Partitioner* partitioner;
 	  
 	  if (algorithm == 4 || algorithm == 5 || algorithm == 6 || algorithm == 7 || algorithm == 8)
@@ -125,7 +126,10 @@ int main(int argc, char** argv) {
 		}
 	    }
 	  else
-	    partitioner = new Partitioner(fileName);
+	    {
+	      refSize = atoi(argv[7]);
+	      partitioner = new Partitioner(fileName);
+	    }
 	  
 	  int k = 0; //doesn't do anything unless alg = 3
 	  
@@ -136,7 +140,7 @@ int main(int argc, char** argv) {
 	  
 	  for (int i = 0; i < randomizationCount; i++)
 	    {
-	      partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal, k, randomizationCount);
+	      partitioner->partition(algorithm, partitionCount, slackValue, i + 1, imbal, k, randomizationCount, refSize);
 	    }
 	  
 	  delete partitioner;

@@ -50,6 +50,12 @@ class Partitioner
   void LDGBF4MULTI(int, int, int, double, int, int, int);
   void LDGBF5MULTI(int, int, int, double, int, int, int);
   void LDGMultiBF();
+
+  void LDGn2p_ref(int, int, int, double, int);
+  void LDGn2p_ref2(int, int, int, double, int);
+  void n2pRefine(int*, int*, int, std::vector<std::vector<int>*>, double, int, std::vector<int>);
+  void n2pRefine2(int, int, double, int*, int*, int*, bool*, std::vector<std::vector<int>*>&, const std::vector<int>&);
+
   //void LSH(int,double);
   void MinMax(int,int,int,double);
   void LSH(int, int);
@@ -58,10 +64,11 @@ class Partitioner
   void vertexOutput(int, int);
   int calculateCuts(int);
   int calculateCuts2(int);
-  void calculateCuts3(int, int);
+  int calculateCuts3(int, int, const std::vector<int>&, const std::vector<std::vector<int>*>&, int);
   
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
+  int n2pIndexAndScore(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&, double&);
   int BFConnectivity(Bloom<int, int>*, int, int);
   int BFConnectivity2(BloomFilter* bf, int, int);
   int BFConnectivity3(BloomFilter_OT* bf, int, int);
@@ -82,7 +89,7 @@ class Partitioner
   ~Partitioner();
   
   //Methods
-  void partition(int, int, int, int, double, int, int);
+  void partition(int, int, int, int, double, int, int, int);
   void RandomPartition(int, int, double, int);
 };
 #endif
