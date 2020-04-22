@@ -77,7 +77,7 @@ Partitioner::Partitioner(std::string fileName){
 }
 
   
-  void Partitioner::read_binary_graph(std::string fileName){
+void Partitioner::read_binary_graph(std::string fileName){
   const char* fname = fileName.c_str();
   FILE* bp;
   bp = fopen(fname, "r");
@@ -101,10 +101,8 @@ Partitioner::Partitioner(std::string fileName){
   std::cout << "No nets: " << this->edgeCount << std::endl;
   std::cout << "No nonzero: " << this-> nonzeroCount << std::endl;
 #endif
-
   this->sparseMatrixIndex = new int[*nnet];
   fread(this->sparseMatrixIndex, sizeof(int), *nnet, bp);
-
   this->sparseMatrix = new int[*nnz];
   fread(this->sparseMatrix, sizeof(int), *nnz, bp);
 
@@ -115,26 +113,37 @@ Partitioner::Partitioner(std::string fileName){
   
   this->reverse_sparseMatrix = new int[*nnz];
   fread(this->reverse_sparseMatrix, sizeof(int), *nnz, bp);
-
+  
+  size_t counter = 0;
+  for(int i = 0; i < this->vertexCount - 1; i++)
+    {
+      if(this->reverse_sparseMatrixIndex[i] > this->reverse_sparseMatrixIndex[i + 1])
+	break;
+      counter++;
+    }
+  this->realVertexCount = counter;
+  /*for(int i = this->reverse_sparseMatrixIndex[0]; i < this->reverse_sparseMatrixIndex[1]; i++){
+    std::cout << "i: " << i  << " " <<this->reverse_sparseMatrix[i] << std::endl;
+    }*/
   //
 
   
 #ifdef DEBUG
   std::cout << "First indexes of xadj and adj" << std::endl;
-  for(int i = 0; i < 150; i++){
-    std::cout << "i: " << i  << " " <<this->sparseMatrixIndex[i] << " " << sparseMatrix[i] << std::endl;
+  for(int i = 0; i < this->edgeCount - 1; i++){
+    std::cout << "i: " << i  << " " <<this->sparseMatrixIndex[i] << " " << sparseMatrixIndex[i + 1] - sparseMatrix[i] << std::endl;
   }
-  
   std::cout << "###############REVERSE#################" << std::endl;
   
   std::cout << "First indexes of reverse xadj and adj" << std::endl;
-  for(int i = 0; i < 150; i++){
-    std::cout << "i: " << i  << " " <<this->reverse_sparseMatrixIndex[i] << " " << reverse_sparseMatrix[i] << std::endl;
+  for(int i = 0; i < this->vertexCount - 1; i++){
+    std::cout << "i: " << i  << " " <<this->reverse_sparseMatrixIndex[i] << " " << reverse_sparseMatrixIndex[i + 1] - this->reverse_sparseMatrixIndex[i] << std::endl;
   }
+  std::cout << "###############REVERSE#################" << std::endl;
+
 #endif
-  
   fclose(bp);
-  }
+}
 
 bool sortbyfirst_and_sec(const pair<int,int> &a, const pair<int,int> &b) 
 { 
@@ -288,11 +297,11 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     std::cout << "Sorting.. " << std::endl;
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
-    
     no_nets = &intermediate[intermediate.size()-1].second;
     adj = new int[intermediate.size()];
     xadj = new int[no_col+1];
     xadj[0] = 0;
+    std::cout << *no_nets << std::endl;
     int current_net = 0;
     int xadj_cursor = 1;
     for(int i = 0; i < intermediate.size(); i++){
@@ -321,40 +330,33 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 
 #ifdef DEBUG
     std::cout << "AFTER REVERSE SORTING, INTERMEDIATE: " << std::endl;
-
-    for(int i = 0; i < 200; i++){
+    std::cout << this->nonzeroCount;
+    for(int i = 0; i < nnz; i++){
       std::cout << "i: " << i << " ||-|| " << intermediate[i].first << " " << intermediate[i].second << std::endl; 
     }
 
 #endif
-
+    //gel buraya
     no_vertex = &intermediate[intermediate.size()-1].first;
     reverse_adj = new int[intermediate.size()];
     reverse_xadj = new int[no_row+1];
-    
     reverse_xadj[0] = 0;
-    
     int current_vertex = 0;
     int r_xadj_cursor = 1;
-
+    std::cout << "START HERE " << std::endl;
     for(int i = 0; i < intermediate.size(); i++){
       reverse_adj[i] = intermediate[i].second;
-      
+
       if(intermediate[i].first != current_vertex){
-	reverse_xadj[r_xadj_cursor] = i;
-	r_xadj_cursor++;
+	reverse_xadj[r_xadj_cursor++] = i;
 	current_vertex = intermediate[i].first;
       }
     }
-
 #ifdef DEBUG
-    for(int i = 0; i < 100; i ++){
-      
-      std::cout << "i: " << i << " ||| reverse_xadj: " << reverse_xadj[i] << " adj: " << reverse_adj[i] << std::endl;
+    for(int i = 0; i < 10; i ++){
+      std::cout << "i: " << i << " ||| reverse_xadj: " << reverse_xadj[i] << " adj: " << reverse_xadj[i + 1] - reverse_xadj[i] << std::endl;
     }
-
-    std::cout << intermediate.size() << " ||| " << nnz+1 << std::endl;
-    std::cout << intermediate[intermediate.size()-1].second << " ||| " << no_col << std::endl;
+    
 #endif
 
 
@@ -440,11 +442,12 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
 #endif
     
     //REVERSE ORDER
-    std::cout << "Reverse sorting.. " << std::endl;
+    /*std::cout << "Reverse sorting.. " << std::endl;
     std::stable_sort(intermediate.begin(), intermediate.end(), sortbysec);
-    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);
-
-    no_vertex = &intermediate[intermediate.size()-1].first;
+    std::stable_sort(intermediate.begin(), intermediate.end(), sortbyfirst);*/
+    
+    std::cout << "here2" << std::endl;
+    no_vertex = &intermediate[intermediate.size()-1].second;
     reverse_adj = new int[intermediate.size()];
     reverse_xadj = new int[no_row+1];
     
@@ -550,7 +553,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       int reg_cuts = this->calculateCuts2(partitionCount);
       std::cout << "Cuts:" << reg_cuts << std::endl;
       for(int i = 0; i < this->vertexCount; i++)
-	partVec[i] = -1;
+      partVec[i] = -1;
       if(refSize > 0)
 	{
 	  std::cout << "@@@SAME RUN WITH REFINEMENT@@@" << std::endl;
@@ -566,9 +569,18 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
 	  end = std::chrono::high_resolution_clock::now();
 	  std::cout << "Duration_R2:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
 	  int ref2_cuts = this->calculateCuts2(partitionCount);
-	  std::cout << "Cuts_R2:" << ref_cuts << std::endl;
+	  std::cout << "Cuts_R2:" << ref2_cuts << std::endl;
 	  std::cout << "R2 - R1: " << ref2_cuts - ref_cuts << std::endl;
 	  std::cout << "Total cut change: " << reg_cuts - ref2_cuts << std::endl;
+	  start = std::chrono::high_resolution_clock::now();
+	  this->LDGn2p_ref3(partitionCount, slackValue, seed, imbal, refSize);
+	  end = std::chrono::high_resolution_clock::now();
+	  std::cout << "Duration_R3:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
+	  int ref3_cuts = this->calculateCuts2(partitionCount);
+	  std::cout << "Cuts_R3:" << ref3_cuts << std::endl;
+	  std::cout << "R3 - R1: " << ref3_cuts - ref_cuts << std::endl;
+	  std::cout << "R3 - R2: " << ref3_cuts - ref2_cuts << std::endl;
+	  std::cout << "Total cut change: " << reg_cuts - ref3_cuts << std::endl;
 	}
     }
   else if(algorithm == 3)
@@ -1708,7 +1720,7 @@ void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, doub
       markerArray[i] = false;
     }
     currVertexCount++;
-    if(refScore == 0.0)
+    if(refScore == 0.0 && !(this->reverse_sparseMatrixIndex[i + 1] <= this->reverse_sparseMatrixIndex[i]))
       {
 	refTracker[vertexCountToRefine++] = i;
 	refScore = -1.0;
@@ -1739,6 +1751,22 @@ void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, doub
     }
 #endif
   }
+
+  for(int i = 0; i < vertexCountToRefine; i++)
+    {
+      std::cout << "Starting refinement round..." << std::endl;
+      auto start = std::chrono::high_resolution_clock::now();
+      //this->n2pRefine(sizeArray, refTracker, refCount, netToPartition, capacityConstraint, partitionCount, tracker);
+      this->n2pRefine2(partitionCount, refCount, capacityConstraint, refTracker, sizeArray, indexArray, markerArray, netToPartition, tracker);
+      auto end  = std::chrono::high_resolution_clock::now();
+      std::cout << "Refinement finished round..." << std::endl;
+      std::cout << "Round duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      for(int i = 0; i < refCount; i++)
+	{
+	  refTracker[i] = -1;
+	}
+      vertexCountToRefine = 0;
+    }
   
   std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
@@ -1755,6 +1783,164 @@ void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, doub
   delete[] sizeArray;
   delete[] indexArray;
   delete[] markerArray;
+}
+
+void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, double imbal, int refSize)
+{
+  int* sizeArray = new int[partitionCount];
+  int* indexArray = new int[partitionCount];
+  bool* markerArray = new bool[partitionCount];
+  std::vector<VertexInfo*> putAsideVector;
+  for (int i = 0; i < partitionCount; i++)
+    {
+      sizeArray[i] = 0;
+      indexArray[i] = -1;
+      markerArray[i] = false;
+    }
+  int refCount = refSize * 250000;
+  double refScore = -1.0;
+
+  std::vector<int> readOrder;
+  
+  /*for (int i = 0; i < this->vertexCount; i++)
+    {
+      readOrder.push_back(i);
+      }*/
+  for (int i = 0; i < this->vertexCount; i++)
+    readOrder.push_back(i);
+  std::srand(seed);
+  std::random_shuffle(readOrder.begin(), readOrder.end());
+  
+  std::vector<std::vector<int>*> netToPartition;  
+  std::vector<int> tracker(10000, -1);
+  double capacityConstraint;
+  int currVertexCount = 0;
+  int current_pa_size = 0;
+  for (int i : readOrder) {
+    
+    if((imbal*currVertexCount) >= slackValue)
+      capacityConstraint = (imbal*currVertexCount) / partitionCount;
+    else
+      capacityConstraint = ((double)slackValue) / partitionCount;
+    for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
+      {
+	int edge = this->reverse_sparseMatrix[k];
+	if(edge >= tracker.size())
+	  {
+	    int currNetIndex = tracker.size() - 1;
+	    for(int j = currNetIndex; j < edge; j++)
+	      {
+	        tracker.push_back(-1);
+		if(j == edge - 1)
+		  {
+		    std::vector<int>* newEdge = new std::vector<int>();
+		    netToPartition.push_back(newEdge);
+		    int n2pSize = netToPartition.size();
+		    netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+		    tracker[j] = n2pSize - 1;    	      
+		  }            
+	      }
+	  }
+	if (tracker[edge] == -1)
+	  {
+	    std::vector<int>* newEdge = new std::vector<int>();
+	    netToPartition.push_back(newEdge);
+	    int n2pSize = netToPartition.size();
+	    netToPartition[n2pSize - 1]->reserve(INITVECSIZE);
+	    tracker[edge] = n2pSize - 1;        
+	  }
+      }
+    int maxIndex = this->n2pIndexAndScore(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker, refScore); 
+    if(refScore <= 0.0 && !(this->reverse_sparseMatrixIndex[i + 1] <= this->reverse_sparseMatrixIndex[i]))
+      {
+	VertexInfo* new_pav = new VertexInfo(i, this->reverse_sparseMatrixIndex[i + 1] - this->reverse_sparseMatrixIndex[i]);
+	
+	for(int offset = 0; offset < new_pav->netCount; offset++)
+	  {
+	    new_pav->netInfo[offset] = this->reverse_sparseMatrix[this->reverse_sparseMatrixIndex[i] + offset];
+	  }
+	putAsideVector.push_back(new_pav);
+	current_pa_size += 1;
+	if(current_pa_size >= refCount)
+	  {
+	    std::cout << "Starting refinement round..." << std::endl;
+	    auto start = std::chrono::high_resolution_clock::now();
+	    //refine burada
+	    this->n2pRefine3(partitionCount, imbal, putAsideVector, sizeArray, indexArray, markerArray, netToPartition, tracker, currVertexCount);
+	    auto end = std::chrono::high_resolution_clock::now();
+	    std::cout << "Refinement round finished..." << std::endl;
+	    std::cout << "Round duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+	    for(int i = 0; i < putAsideVector.size(); i++)
+	      {
+		delete putAsideVector[i];
+	      }
+	    putAsideVector.clear();
+
+	    current_pa_size = 0;
+	  }	
+      }
+    else
+      {
+	partVec[i] = maxIndex;
+	sizeArray[maxIndex] += 1;
+	for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
+	  {
+	    int edge = this->reverse_sparseMatrix[k];      
+	    if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
+	      netToPartition[tracker[edge]]->push_back(maxIndex);      
+	  }
+	
+	currVertexCount++;
+      }
+    for (int i = 0; i < partitionCount; i++) {
+      indexArray[i] = -1;
+      markerArray[i] = false;
+    }
+
+    //calculateCuts3(partitionCount, i);
+
+#ifdef WATCH
+    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" << std::flush;
+    if(((double)currVertexCount/this->vertexCount)*100 < double(100.9)){
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << ((double)currVertexCount/this->vertexCount)*100 << "%" << std::flush;;
+    }else{
+      std::cout << std::fixed << std::setprecision(2) << "Progress: " << "???" << "%" << std::flush;;
+    }
+#endif
+  }
+  
+  if(putAsideVector.size() != 0)
+    {
+      std::cout << "Starting refinement round..." << std::endl;
+      auto start = std::chrono::high_resolution_clock::now();
+      //refine burada
+      this->n2pRefine3(partitionCount, capacityConstraint, putAsideVector, sizeArray, indexArray, markerArray, netToPartition, tracker, currVertexCount);
+      auto end = std::chrono::high_resolution_clock::now();
+      std::cout << "Refinement round finished..." << std::endl;
+      std::cout << "Round duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
+      for(int i = 0; i < putAsideVector.size(); i++)
+	{
+	  delete putAsideVector[i];
+	}
+      putAsideVector.clear();
+      current_pa_size = 0;
+    }	
+  
+  std::cout << std::endl;
+  std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
+  std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
+  std::cout << "******PART SIZES*******" << std::endl;
+  
+  for(int i = 0; i < partitionCount; i++){
+    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  }
+  for(int i = 0; i < netToPartition.size(); i++)
+    {
+      delete netToPartition[i];
+    }
+  //delete[] sizeArray;
+  //delete[] indexArray;
+  //delete[] markerArray;
 }
 
 void Partitioner::n2pRefine(int* sizeArray, int* refTracker, int refCount, std::vector<std::vector<int>*> netToPartition, double capacityConstraint, int partitionCount, std::vector<int> tracker)
@@ -1832,6 +2018,31 @@ void Partitioner::n2pRefine2(int partitionCount, int refCount, double capacityCo
     }
 }
 
+void Partitioner::n2pRefine3(int partitionCount, double imbal, const std::vector<VertexInfo*>& putAsideVector, int* sizeArray, int* indexArray, bool* markerArray, std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker, int& currVertexCount)
+{
+  for(int i = 0; i < putAsideVector.size(); i++)
+    {
+      double capacityConstraint = (imbal*currVertexCount) / partitionCount;
+      int vertex = putAsideVector[i]->ID;
+      //std::cout << "ID: " << vertex << std::endl;
+      int maxIndex = this->n2pIndex(vertex, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
+      //std::cout << "MI: " << maxIndex << std::endl;
+      this->partVec[vertex] = maxIndex;
+      sizeArray[maxIndex] += 1;
+      for(int offset = 0; offset < putAsideVector[i]->netCount; offset++)
+	{
+	  int edge = putAsideVector[i]->netInfo[offset];
+	  if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
+	    netToPartition[tracker[edge]]->push_back(maxIndex);
+	}
+      for (int i = 0; i < partitionCount; i++) {
+	indexArray[i] = -1;
+	markerArray[i] = false;
+	currVertexCount++;
+      }  
+      
+    }
+}
 void Partitioner::MinMax(int partitionCount, int SLACK, int seed, double imbal)
 {
   int* sizeArray = new int[partitionCount];
@@ -2112,6 +2323,8 @@ int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstra
       for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
 	{
 	  int part = netToPartition[edgeIndex]->at(i);
+	  if(part == -1)
+	    continue;
 	  if (markerArrayLocal[part])
 	    { 
  	      encounterArray[indexArray[part]] += 1;
@@ -2175,6 +2388,8 @@ int Partitioner::n2pIndexAndScore(int vertex, int partitionCount, double capacit
       for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
 	{
 	  int part = netToPartition[edgeIndex]->at(i);
+	  if(part == -1)
+	    continue;
 	  if (markerArrayLocal[part])
 	    { 
  	      encounterArray[indexArray[part]] += 1;
@@ -2187,7 +2402,6 @@ int Partitioner::n2pIndexAndScore(int vertex, int partitionCount, double capacit
 	    }
 	}
     }
-
   double maxScore = -1.0;
   int maxIndex = -1;
   for (int i = 0; i < partitionCount; i++)
@@ -2327,7 +2541,7 @@ int Partitioner::calculateCuts2(int partitionCount)
       }
     }
   
-  delete[] arr;
+  //delete[] arr;
   return cuts;
 }
 

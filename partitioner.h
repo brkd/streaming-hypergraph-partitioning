@@ -15,6 +15,18 @@
 #define MAXSLACKVAL 1000
 #define INITVECSIZE 5
 
+struct VertexInfo
+{
+  int ID;
+  int netCount;
+  int* netInfo;
+VertexInfo(int ID, int netCount): ID(ID), netCount(netCount)
+  {
+    netInfo = new int[netCount]; 
+  }
+  
+};
+
 class Partitioner
 {
  private:
@@ -32,6 +44,7 @@ class Partitioner
   size_t vertexCount;
   size_t edgeCount;
   size_t nonzeroCount;
+  size_t realVertexCount;
   int byteSize;
   int hashCount;
   bool symmetry;
@@ -53,8 +66,10 @@ class Partitioner
 
   void LDGn2p_ref(int, int, int, double, int);
   void LDGn2p_ref2(int, int, int, double, int);
+  void LDGn2p_ref3(int, int, int, double, int);
   void n2pRefine(int*, int*, int, std::vector<std::vector<int>*>, double, int, std::vector<int>);
   void n2pRefine2(int, int, double, int*, int*, int*, bool*, std::vector<std::vector<int>*>&, const std::vector<int>&);
+  void n2pRefine3(int,  double, const std::vector<VertexInfo*>&,  int*, int*, bool*, std::vector<std::vector<int>*>&, const std::vector<int>&, int&);
 
   //void LSH(int,double);
   void MinMax(int,int,int,double);
