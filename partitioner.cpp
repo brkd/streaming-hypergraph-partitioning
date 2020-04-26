@@ -553,7 +553,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       int reg_cuts = this->calculateCuts2(partitionCount);
       std::cout << "Cuts:" << reg_cuts << std::endl;
       for(int i = 0; i < this->vertexCount; i++)
-      partVec[i] = -1;
+	partVec[i] = -1;
       if(refSize > 0)
 	{
 	  std::cout << "@@@SAME RUN WITH REFINEMENT@@@" << std::endl;
@@ -564,6 +564,8 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
 	  int ref_cuts = this->calculateCuts2(partitionCount);
 	  std::cout << "Cuts_R:" << ref_cuts << std::endl;
 	  std::cout << "Total cut change: " << reg_cuts - ref_cuts << std::endl;
+	  for(int i = 0; i < this->vertexCount; i++)
+	    partVec[i] = -1;
 	  start = std::chrono::high_resolution_clock::now();
 	  this->LDGn2p_ref2(partitionCount, slackValue, seed, imbal, refSize);
 	  end = std::chrono::high_resolution_clock::now();
@@ -572,6 +574,8 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
 	  std::cout << "Cuts_R2:" << ref2_cuts << std::endl;
 	  std::cout << "R2 - R1: " << ref2_cuts - ref_cuts << std::endl;
 	  std::cout << "Total cut change: " << reg_cuts - ref2_cuts << std::endl;
+	  for(int i = 0; i < this->vertexCount; i++)
+	    partVec[i] = -1;
 	  start = std::chrono::high_resolution_clock::now();
 	  this->LDGn2p_ref3(partitionCount, slackValue, seed, imbal, refSize);
 	  end = std::chrono::high_resolution_clock::now();
@@ -581,6 +585,8 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
 	  std::cout << "R3 - R1: " << ref3_cuts - ref_cuts << std::endl;
 	  std::cout << "R3 - R2: " << ref3_cuts - ref2_cuts << std::endl;
 	  std::cout << "Total cut change: " << reg_cuts - ref3_cuts << std::endl;
+	  for(int i = 0; i < this->vertexCount; i++)
+	    partVec[i] = -1;
 	}
     }
   else if(algorithm == 3)
