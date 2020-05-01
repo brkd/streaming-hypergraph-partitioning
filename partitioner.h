@@ -80,6 +80,7 @@ class Partitioner
   int calculateCuts(int);
   int calculateCuts2(int);
   int calculateCuts3(int, int, const std::vector<int>&, const std::vector<std::vector<int>*>&, int);
+  int calculateCuts4(int, const std::vector<std::vector<int>*>&);
   
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
