@@ -94,7 +94,6 @@ void Partitioner::read_binary_graph(std::string fileName){
   
   fread(nnz, sizeof(int), 1, bp);
   this-> nonzeroCount = *nnz;
-
   
 #ifdef DEBUG
   std::cout << "No vertices: " << this->vertexCount << std::endl;
@@ -250,7 +249,6 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
   int vertex, net;
 
   fin >> no_row >> no_col >> nnz;
-  
   std::vector<std::pair<int,int>> intermediate;
   
   if(_general){	
@@ -550,41 +548,41 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       this->LDGn2p(partitionCount, slackValue, seed, imbal);
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
-      int reg_cuts = this->calculateCuts2(partitionCount);
-      std::cout << "Cuts:" << reg_cuts << std::endl;
+      //int reg_cuts = this->calculateCuts2(partitionCount);
+      //std::cout << "Cuts:" << reg_cuts << std::endl;
       for(int i = 0; i < this->vertexCount; i++)
 	partVec[i] = -1;
       if(refSize > 0)
 	{
 	  std::cout << "@@@SAME RUN WITH REFINEMENT@@@" << std::endl;
-	  start = std::chrono::high_resolution_clock::now();
-	  this->LDGn2p_ref(partitionCount, slackValue, seed, imbal, refSize);
-	  end = std::chrono::high_resolution_clock::now();
-	  std::cout << "Duration_R:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
-	  int ref_cuts = this->calculateCuts2(partitionCount);
-	  std::cout << "Cuts_R:" << ref_cuts << std::endl;
-	  std::cout << "Total cut change: " << reg_cuts - ref_cuts << std::endl;
-	  for(int i = 0; i < this->vertexCount; i++)
-	    partVec[i] = -1;
-	  start = std::chrono::high_resolution_clock::now();
-	  this->LDGn2p_ref2(partitionCount, slackValue, seed, imbal, refSize);
-	  end = std::chrono::high_resolution_clock::now();
-	  std::cout << "Duration_R2:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
-	  int ref2_cuts = this->calculateCuts2(partitionCount);
-	  std::cout << "Cuts_R2:" << ref2_cuts << std::endl;
-	  std::cout << "R2 - R1: " << ref2_cuts - ref_cuts << std::endl;
-	  std::cout << "Total cut change: " << reg_cuts - ref2_cuts << std::endl;
-	  for(int i = 0; i < this->vertexCount; i++)
-	    partVec[i] = -1;
+	  //start = std::chrono::high_resolution_clock::now();
+	  //this->LDGn2p_ref(partitionCount, slackValue, seed, imbal, refSize);
+	  //end = std::chrono::high_resolution_clock::now();
+	  //std::cout << "Duration_R:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
+	  //int ref_cuts = this->calculateCuts2(partitionCount);
+	  //std::cout << "Cuts_R:" << ref_cuts << std::endl;
+	  //std::cout << "Total cut change: " << reg_cuts - ref_cuts << std::endl;
+	  //for(int i = 0; i < this->vertexCount; i++)
+	  //partVec[i] = -1;
+	  //start = std::chrono::high_resolution_clock::now();
+	  //this->LDGn2p_ref2(partitionCount, slackValue, seed, imbal, refSize);
+	  //end = std::chrono::high_resolution_clock::now();
+	  //std::cout << "Duration_R2:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
+	  //int ref2_cuts = this->calculateCuts2(partitionCount);
+	  //std::cout << "Cuts_R2:" << ref2_cuts << std::endl;
+	  //std::cout << "R2 - R1: " << ref2_cuts - ref_cuts << std::endl;
+	  //std::cout << "Total cut change: " << reg_cuts - ref2_cuts << std::endl;
+	  //for(int i = 0; i < this->vertexCount; i++)
+	  //partVec[i] = -1;
 	  start = std::chrono::high_resolution_clock::now();
 	  this->LDGn2p_ref3(partitionCount, slackValue, seed, imbal, refSize);
 	  end = std::chrono::high_resolution_clock::now();
 	  std::cout << "Duration_R3:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
-	  int ref3_cuts = this->calculateCuts2(partitionCount);
-	  std::cout << "Cuts_R3:" << ref3_cuts << std::endl;
-	  std::cout << "R3 - R1: " << ref3_cuts - ref_cuts << std::endl;
-	  std::cout << "R3 - R2: " << ref3_cuts - ref2_cuts << std::endl;
-	  std::cout << "Total cut change: " << reg_cuts - ref3_cuts << std::endl;
+	  //int ref3_cuts = this->calculateCuts2(partitionCount);
+	  //std::cout << "Cuts_R3:" << ref3_cuts << std::endl;
+	  //std::cout << "R3 - R1: " << ref3_cuts - ref_cuts << std::endl;
+	  //std::cout << "R3 - R2: " << ref3_cuts - ref2_cuts << std::endl;
+	  //std::cout << "Total cut change: " << reg_cuts - ref3_cuts << std::endl;
 	  for(int i = 0; i < this->vertexCount; i++)
 	    partVec[i] = -1;
 	}
@@ -648,7 +646,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
 
   
   //std::cout << "Cuts:" << this->calculateCuts(partitionCount) << std::endl;
-  std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
+  //std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
   /*if (finalRun == 1)
     this->vertexOutput(algorithm, seed);  */
 
@@ -884,6 +882,10 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
+
+  int reg_cuts = this->calculateCuts4(partitionCount, netToPartition);
+  std::cout << "Cuts:" << reg_cuts << std::endl;
+
   for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
@@ -1940,6 +1942,10 @@ void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, doub
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
+
+  int r3_cuts = this->calculateCuts4(partitionCount, netToPartition);
+  std::cout << "Cuts_R3:" << r3_cuts << std::endl;
+
   for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
@@ -2044,9 +2050,8 @@ void Partitioner::n2pRefine3(int partitionCount, double imbal, const std::vector
       for (int i = 0; i < partitionCount; i++) {
 	indexArray[i] = -1;
 	markerArray[i] = false;
-	currVertexCount++;
       }  
-      
+      currVertexCount++;	
     }
 }
 void Partitioner::MinMax(int partitionCount, int SLACK, int seed, double imbal)
@@ -2529,7 +2534,6 @@ int Partitioner::calculateCuts2(int partitionCount)
     {
       int net = i;
       int cut = 0;
-      
       for(int k = this->sparseMatrixIndex[net]; k < this->sparseMatrixIndex[net + 1]; k++)
 	{
 	  int vertex = sparseMatrix[k];
@@ -2539,9 +2543,12 @@ int Partitioner::calculateCuts2(int partitionCount)
 	}
       for(int b = 0; b < partitionCount; b++){
 	if(arr[b])
-	  cut++;
+	  {
+	    cut++;
+	  }
       }
-      cuts += cut-1;
+      if(cut != 0)
+	cuts += cut-1;
       for(int b = 0; b < partitionCount; b++){
 	arr[b] = 0;
       }
@@ -2563,5 +2570,19 @@ int Partitioner::calculateCuts3(int partitionCount, int vertex, const std::vecto
 	cuts += (cut - 1);      
     }  
   this->cutArray[vertex] = cuts;
+  return cuts;
+}
+
+int Partitioner::calculateCuts4(int partitionCount, const std::vector<std::vector<int>*>& netToPartition)
+{
+  int cuts = 0;
+  for(int i = 0; i < netToPartition.size(); i++)
+    {
+      int cut = netToPartition[i]->size();
+      if (cut != 0)
+	{
+	  cuts += netToPartition[i]->size() - 1;
+	}
+    }
   return cuts;
 }
