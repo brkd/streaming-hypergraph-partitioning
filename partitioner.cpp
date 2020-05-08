@@ -690,9 +690,9 @@ void Partitioner::RandomPartition(int partitionCount, int seed, double imbal, in
       currVertexCount++;
     }
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  //}
   
   std::cout << "Cuts:" << this->calculateCuts2(partitionCount) << std::endl;
   
@@ -779,9 +779,9 @@ void Partitioner::LDGp2n(int partitionCount, int slackValue, int seed, double im
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  //}
   
   delete[] sizeArray;
 }
@@ -814,8 +814,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   double capacityConstraint;
   int currVertexCount = 0;
   
-  for (int i : readOrder) {
-    
+  for (int i : readOrder) {    
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
     else
@@ -880,9 +879,10 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
+
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  //}
 
   int reg_cuts = this->calculateCuts4(partitionCount, netToPartition);
   std::cout << "Cuts:" << reg_cuts << std::endl;
@@ -997,9 +997,9 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  //}
   for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
@@ -1084,9 +1084,9 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
   
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  //}
   
   delete[] sizeArray;
 }
@@ -1169,9 +1169,9 @@ void Partitioner::LDGBF2(int partitionCount, int slackValue, int seed, double im
   
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  //}
 
   delete[] bf;
   delete[] sizeArray;
@@ -1252,9 +1252,9 @@ void Partitioner::LDGBF3(int partitionCount, int slackValue, int seed, double im
   
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  //}
   
   delete[] sizeArray;
 }
@@ -1336,9 +1336,9 @@ void Partitioner::LDGBF4MULTI(int partitionCount, int slackValue, int seed, doub
   
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //   std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  //}
   
   delete[] sizeArray;
 }
@@ -1454,9 +1454,9 @@ void Partitioner::LDGBF5MULTI(int partitionCount, int slackValue, int seed, doub
   
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
+  //}
   
   delete[] sizeArray;
   delete[] existences;
@@ -1576,6 +1576,7 @@ void Partitioner::LDGn2p_ref(int partitionCount, int slackValue, int seed, doubl
 		  }            
 	      }
 	  }
+	
 	if (tracker[edge] == -1)
 	  {
 	    std::vector<int>* newEdge = new std::vector<int>();
@@ -1634,6 +1635,7 @@ void Partitioner::LDGn2p_ref(int partitionCount, int slackValue, int seed, doubl
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
+
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
@@ -1641,13 +1643,14 @@ void Partitioner::LDGn2p_ref(int partitionCount, int slackValue, int seed, doubl
   std::cout << "Cuts:" << r1_cuts << std::endl;
   std::cout << "Final Constraint: " << capacityConstraint << std::endl;
 
+
   /*for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
     }
-  delete[] sizeArray;
-  delete[] indexArray;
-  delete[] markerArray;*/
+    delete[] sizeArray;
+    delete[] indexArray;
+    delete[] markerArray;*/
 }
 
 void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, double imbal, int refSize)
@@ -1795,6 +1798,7 @@ void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, doub
   std::cout << "Cuts:" << r2_cuts << std::endl;
   std::cout << "Final Constraint: " << capacityConstraint << std::endl;
   /*for(int i = 0; i < netToPartition.size(); i++)
+
     {
       delete netToPartition[i];
     }
@@ -1869,6 +1873,7 @@ void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, doub
 	  }
       }
     int maxIndex = this->n2pIndexAndScoreCorrected(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker, refScore); 
+
     if(refScore <= 0.0 && !(this->reverse_sparseMatrixIndex[i + 1] <= this->reverse_sparseMatrixIndex[i]))
       {
 	VertexInfo* new_pav = new VertexInfo(i, this->reverse_sparseMatrixIndex[i + 1] - this->reverse_sparseMatrixIndex[i]);
@@ -1949,9 +1954,9 @@ void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, doub
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
+  //for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  //}
 
   int r3_cuts = this->calculateCuts4(partitionCount, netToPartition);
   std::cout << "Cuts_R3:" << r3_cuts << std::endl;
@@ -2149,9 +2154,9 @@ for (int j = 0; j < partitionCount; j++)
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  //}
   
   delete[] sizeArray;
 }
@@ -2233,9 +2238,9 @@ void Partitioner::LSH(int partitionCount, int seed)
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << "-1" << std::endl;
   std::cout << "******PART SIZES*******" << std::endl;
   
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
+  //  for(int i = 0; i < partitionCount; i++){
+  //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
+  //}
   
   delete[] sizeArray;
 }
