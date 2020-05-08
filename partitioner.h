@@ -84,7 +84,9 @@ class Partitioner
   
   int p2nConnectivity(int, int, const std::vector<std::vector<int>>&);
   int n2pIndex(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
+  int n2pIndexCorrected(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&);
   int n2pIndexAndScore(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&, double&);
+  int n2pIndexAndScoreCorrected(int, int, double, int*, int*, bool*, const std::vector<std::vector<int>*>&, const std::vector<int>&, double&);
   int BFConnectivity(Bloom<int, int>*, int, int);
   int BFConnectivity2(BloomFilter* bf, int, int);
   int BFConnectivity3(BloomFilter_OT* bf, int, int);

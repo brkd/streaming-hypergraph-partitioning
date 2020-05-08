@@ -334,7 +334,6 @@ void Partitioner::read_mtx_and_transform_to_shpbin(std::string fileName){
     }
 
 #endif
-    //gel buraya
     no_vertex = &intermediate[intermediate.size()-1].first;
     reverse_adj = new int[intermediate.size()];
     reverse_xadj = new int[no_row+1];
@@ -554,26 +553,28 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
 	partVec[i] = -1;
       if(refSize > 0)
 	{
-	  std::cout << "@@@SAME RUN WITH REFINEMENT@@@" << std::endl;
-	  //start = std::chrono::high_resolution_clock::now();
-	  //this->LDGn2p_ref(partitionCount, slackValue, seed, imbal, refSize);
-	  //end = std::chrono::high_resolution_clock::now();
-	  //std::cout << "Duration_R:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
+	  std::cout << "@@@ SAME RUN WITH REFINEMENT @@@" << std::endl;
+	  start = std::chrono::high_resolution_clock::now();
+	  this->LDGn2p_ref(partitionCount, slackValue, seed, imbal, refSize);
+	  end = std::chrono::high_resolution_clock::now();
+	  std::cout << "Duration_R:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
 	  //int ref_cuts = this->calculateCuts2(partitionCount);
 	  //std::cout << "Cuts_R:" << ref_cuts << std::endl;
 	  //std::cout << "Total cut change: " << reg_cuts - ref_cuts << std::endl;
-	  //for(int i = 0; i < this->vertexCount; i++)
-	  //partVec[i] = -1;
-	  //start = std::chrono::high_resolution_clock::now();
-	  //this->LDGn2p_ref2(partitionCount, slackValue, seed, imbal, refSize);
-	  //end = std::chrono::high_resolution_clock::now();
-	  //std::cout << "Duration_R2:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
+	  for(int i = 0; i < this->vertexCount; i++)
+	    partVec[i] = -1;
+	  std::cout << "@@@ SAME RUN WITH REFINEMENT 2 @@@" << std::endl;
+	  start = std::chrono::high_resolution_clock::now();
+	  this->LDGn2p_ref2(partitionCount, slackValue, seed, imbal, refSize);
+	  end = std::chrono::high_resolution_clock::now();
+	  std::cout << "Duration_R2:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
 	  //int ref2_cuts = this->calculateCuts2(partitionCount);
 	  //std::cout << "Cuts_R2:" << ref2_cuts << std::endl;
 	  //std::cout << "R2 - R1: " << ref2_cuts - ref_cuts << std::endl;
 	  //std::cout << "Total cut change: " << reg_cuts - ref2_cuts << std::endl;
-	  //for(int i = 0; i < this->vertexCount; i++)
-	  //partVec[i] = -1;
+	  for(int i = 0; i < this->vertexCount; i++)
+	    partVec[i] = -1;
+	  std::cout << "@@@ SAME RUN WITH REFINEMENT 3 @@@" << std::endl;
 	  start = std::chrono::high_resolution_clock::now();
 	  this->LDGn2p_ref3(partitionCount, slackValue, seed, imbal, refSize);
 	  end = std::chrono::high_resolution_clock::now();
@@ -847,7 +848,7 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
 	    tracker[edge] = n2pSize - 1;        
 	  }
       }
-    int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
+    int maxIndex = this->n2pIndexCorrected(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
     //std::cout << "Vertex: " << i << " cuts: " << calculateCuts2(partitionCount) << std::endl;
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
@@ -885,14 +886,15 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
 
   int reg_cuts = this->calculateCuts4(partitionCount, netToPartition);
   std::cout << "Cuts:" << reg_cuts << std::endl;
-
-  for(int i = 0; i < netToPartition.size(); i++)
+  std::cout << "Final Constraint: " << capacityConstraint << std::endl;
+  /*for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
-    }
-  delete[] sizeArray;
-  delete[] indexArray;
-  delete[] markerArray;
+      }*/
+
+  //delete[] sizeArray;
+  //delete[] indexArray;
+  //delete[] markerArray;
 }
 
 void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double imbal, int ii)
@@ -1583,7 +1585,7 @@ void Partitioner::LDGn2p_ref(int partitionCount, int slackValue, int seed, doubl
 	    tracker[edge] = n2pSize - 1;        
 	  }
       }
-    int maxIndex = this->n2pIndex(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
+    int maxIndex = this->n2pIndexCorrected(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
     //std::cout << "Vertex: " << i << " cuts: " << calculateCuts2(partitionCount) << std::endl;
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
@@ -1635,13 +1637,17 @@ void Partitioner::LDGn2p_ref(int partitionCount, int slackValue, int seed, doubl
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
-  for(int i = 0; i < netToPartition.size(); i++)
+  int r1_cuts = this->calculateCuts4(partitionCount, netToPartition);
+  std::cout << "Cuts:" << r1_cuts << std::endl;
+  std::cout << "Final Constraint: " << capacityConstraint << std::endl;
+
+  /*for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
     }
   delete[] sizeArray;
   delete[] indexArray;
-  delete[] markerArray;
+  delete[] markerArray;*/
 }
 
 void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, double imbal, int refSize)
@@ -1711,7 +1717,7 @@ void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, doub
 	    tracker[edge] = n2pSize - 1;        
 	  }
       }
-    int maxIndex = this->n2pIndexAndScore(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker, refScore); 
+    int maxIndex = this->n2pIndexAndScoreCorrected(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker, refScore); 
     //std::cout << "Vertex: " << i << " cuts: " << calculateCuts2(partitionCount) << std::endl;
     partVec[i] = maxIndex;
     sizeArray[maxIndex] += 1;
@@ -1784,13 +1790,17 @@ void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, doub
   for(int i = 0; i < partitionCount; i++){
     std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   }
-  for(int i = 0; i < netToPartition.size(); i++)
+
+  int r2_cuts = this->calculateCuts4(partitionCount, netToPartition);
+  std::cout << "Cuts:" << r2_cuts << std::endl;
+  std::cout << "Final Constraint: " << capacityConstraint << std::endl;
+  /*for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
     }
   delete[] sizeArray;
   delete[] indexArray;
-  delete[] markerArray;
+  delete[] markerArray;*/
 }
 
 void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, double imbal, int refSize)
@@ -1858,7 +1868,7 @@ void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, doub
 	    tracker[edge] = n2pSize - 1;        
 	  }
       }
-    int maxIndex = this->n2pIndexAndScore(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker, refScore); 
+    int maxIndex = this->n2pIndexAndScoreCorrected(i, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker, refScore); 
     if(refScore <= 0.0 && !(this->reverse_sparseMatrixIndex[i + 1] <= this->reverse_sparseMatrixIndex[i]))
       {
 	VertexInfo* new_pav = new VertexInfo(i, this->reverse_sparseMatrixIndex[i + 1] - this->reverse_sparseMatrixIndex[i]);
@@ -1922,7 +1932,7 @@ void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, doub
       std::cout << "Starting refinement round..." << std::endl;
       auto start = std::chrono::high_resolution_clock::now();
       //refine burada
-      this->n2pRefine3(partitionCount, capacityConstraint, putAsideVector, sizeArray, indexArray, markerArray, netToPartition, tracker, currVertexCount);
+      this->n2pRefine3(partitionCount, imbal, putAsideVector, sizeArray, indexArray, markerArray, netToPartition, tracker, currVertexCount);
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Refinement round finished..." << std::endl;
       std::cout << "Round duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << "s" << std::endl;
@@ -1945,11 +1955,11 @@ void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, doub
 
   int r3_cuts = this->calculateCuts4(partitionCount, netToPartition);
   std::cout << "Cuts_R3:" << r3_cuts << std::endl;
-
-  for(int i = 0; i < netToPartition.size(); i++)
+  std::cout << "Final Constraint: " << capacityConstraint << std::endl;
+  /*for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
-    }
+      }*/
   //delete[] sizeArray;
   //delete[] indexArray;
   //delete[] markerArray;
@@ -1991,7 +2001,7 @@ void Partitioner::n2pRefine2(int partitionCount, int refCount, double capacityCo
   for(int i = 0; i < refCount; i++)
     {
       int vertex = refTracker[i];
-      int maxIndex = this->n2pIndex(vertex, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
+      int maxIndex = this->n2pIndexCorrected(vertex, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
       if(maxIndex != this->partVec[vertex] && sizeArray[maxIndex] < capacityConstraint)
 	{
 	  int old_part = this->partVec[vertex];
@@ -2037,7 +2047,7 @@ void Partitioner::n2pRefine3(int partitionCount, double imbal, const std::vector
       double capacityConstraint = (imbal*currVertexCount) / partitionCount;
       int vertex = putAsideVector[i]->ID;
       //std::cout << "ID: " << vertex << std::endl;
-      int maxIndex = this->n2pIndex(vertex, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
+      int maxIndex = this->n2pIndexCorrected(vertex, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
       //std::cout << "MI: " << maxIndex << std::endl;
       this->partVec[vertex] = maxIndex;
       sizeArray[maxIndex] += 1;
@@ -2384,6 +2394,181 @@ int Partitioner::n2pIndex(int vertex, int partitionCount, double capacityConstra
   return maxIndex;
 }
 
+int Partitioner::n2pIndexCorrected(int vertex, int partitionCount, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArrayLocal, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker)
+{   
+  double maxScore = -1.0;
+  int maxIndex = -1;
+  int connectivity;      
+  int degree = this->reverse_sparseMatrixIndex[vertex + 1] - this->reverse_sparseMatrixIndex[vertex];
+  if(degree <= 0)
+    {
+      maxIndex = partitionCount - 1;
+      for (int i = partitionCount - 2; i >= 0; i--)
+	{
+	  if(sizeArray[i] + 1 < capacityConstraint && sizeArray[i] < sizeArray[maxIndex])
+	    maxIndex = i;
+	}      
+    }
+
+  else
+    {
+      std::vector<int> encounterArray;
+      std::vector<int> partArray;
+      for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
+	{
+	  int edge = this->reverse_sparseMatrix[k];
+	  int edgeIndex = tracker[edge];
+	  for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
+	    {
+	      int part = netToPartition[edgeIndex]->at(i);
+	      if(part == -1)
+		continue;
+	      if (markerArrayLocal[part])
+		{ 
+		  encounterArray[indexArray[part]] += 1;
+		}		    
+	      else
+		{
+		  encounterArray.push_back(1);
+		  indexArray[part] = encounterArray.size() - 1;
+		  markerArrayLocal[part] = true;
+		  partArray.push_back(part);
+		}
+	    }
+	}
+      if(partArray.size() == 0)
+	{
+	  maxIndex = partitionCount - 1;
+	  for (int i = partitionCount - 2; i >= 0; i--)
+	    {
+	      if(sizeArray[i] + 1 < capacityConstraint && sizeArray[i] < sizeArray[maxIndex])
+		maxIndex = i;
+	    }      
+	}
+      
+      else
+	{
+	  for (int part : partArray)
+	    {
+	      connectivity = encounterArray[indexArray[part]];
+	      double partOverCapacity = sizeArray[part] / capacityConstraint;
+	      double penalty = 1 - partOverCapacity;
+	      double score = penalty * connectivity;
+	      if (score > maxScore)
+		{
+		  maxScore = score;
+		  maxIndex = part;
+		}      
+	      else if (score == maxScore)
+		{
+		  
+		  if (sizeArray[part] < sizeArray[maxIndex])
+		    {
+		      maxIndex = part;
+		    } 	      
+		}
+	    }
+	}
+    }
+  
+  for(int i = 0; i < partitionCount; i++)
+    {
+      indexArray[i] = -1;
+      markerArrayLocal[i] = false;
+    }
+
+  return maxIndex;
+}
+
+int Partitioner::n2pIndexAndScoreCorrected(int vertex, int partitionCount, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArrayLocal, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker, double& scoreToReturn)
+{   
+  double maxScore = -1.0;
+  int maxIndex = -1;
+  int connectivity;      
+  int degree = this->reverse_sparseMatrixIndex[vertex + 1] - this->reverse_sparseMatrixIndex[vertex];
+  if(degree <= 0)
+    {
+      maxIndex = partitionCount - 1;
+      maxScore = 1.0;
+      for (int i = partitionCount - 2; i >= 0; i--)
+	{
+	  if(sizeArray[i] + 1 < capacityConstraint && sizeArray[i] < sizeArray[maxIndex])
+	    maxIndex = i;
+	}      
+    }
+
+  else
+    {
+      std::vector<int> encounterArray;
+      std::vector<int> partArray;
+      for (int k = this->reverse_sparseMatrixIndex[vertex]; k < this->reverse_sparseMatrixIndex[vertex + 1]; k++)
+	{
+	  int edge = this->reverse_sparseMatrix[k];
+	  int edgeIndex = tracker[edge];
+	  for (int i = 0; i < netToPartition[edgeIndex]->size(); i++)
+	    {
+	      int part = netToPartition[edgeIndex]->at(i);
+	      if(part == -1)
+		continue;
+	      if (markerArrayLocal[part])
+		{ 
+		  encounterArray[indexArray[part]] += 1;
+		}		    
+	      else
+		{
+		  encounterArray.push_back(1);
+		  indexArray[part] = encounterArray.size() - 1;
+		  markerArrayLocal[part] = true;
+		  partArray.push_back(part);
+		}
+	    }
+	}
+      if(partArray.size() == 0)
+	{
+	  maxIndex = partitionCount - 1;
+	  maxScore = 0.0;
+	  for (int i = partitionCount - 2; i >= 0; i--)
+	    {
+	      if(sizeArray[i] + 1 < capacityConstraint && sizeArray[i] < sizeArray[maxIndex])
+		maxIndex = i;
+	    }      
+	}
+      
+      else
+	{
+	  for (int part : partArray)
+	    {
+	      connectivity = encounterArray[indexArray[part]];
+	      double partOverCapacity = sizeArray[part] / capacityConstraint;
+	      double penalty = 1 - partOverCapacity;
+	      double score = penalty * connectivity;
+	      if (score > maxScore)
+		{
+		  maxScore = score;
+		  maxIndex = part;
+		}      
+	      else if (score == maxScore)
+		{
+		  
+		  if (sizeArray[part] < sizeArray[maxIndex])
+		    {
+		      maxIndex = part;
+		    } 	      
+		}
+	    }
+	}
+    }
+  
+  for(int i = 0; i < partitionCount; i++)
+    {
+      indexArray[i] = -1;
+      markerArrayLocal[i] = false;
+    }
+  
+  scoreToReturn = maxScore;
+  return maxIndex;
+}
+
 int Partitioner::n2pIndexAndScore(int vertex, int partitionCount, double capacityConstraint, int* sizeArray, int* indexArray, bool* markerArrayLocal, const std::vector<std::vector<int>*>& netToPartition, const std::vector<int>& tracker, double& scoreToReturn)
 {   
   for(int i = 0; i < partitionCount; i++)
@@ -2413,6 +2598,7 @@ int Partitioner::n2pIndexAndScore(int vertex, int partitionCount, double capacit
 	    }
 	}
     }
+  
   double maxScore = -1.0;
   int maxIndex = -1;
   for (int i = 0; i < partitionCount; i++)
@@ -2440,11 +2626,13 @@ int Partitioner::n2pIndexAndScore(int vertex, int partitionCount, double capacit
 	}
       
     }
+
   for(int i = 0; i < partitionCount; i++)
     {
       indexArray[i] = -1;
       markerArrayLocal[i] = false;
     }
+
   scoreToReturn = maxScore;
   return maxIndex;
 }
@@ -2527,7 +2715,7 @@ int Partitioner::calculateCuts2(int partitionCount)
   bool* arr = new bool[partitionCount];
   
   for(int b = 0; b < partitionCount; b++){
-    arr[b] = 0;
+    arr[b] = false;
   }
   
   for(int i = 0; i < this->edgeCount; i++)
@@ -2539,7 +2727,7 @@ int Partitioner::calculateCuts2(int partitionCount)
 	  int vertex = sparseMatrix[k];
 	  int part = this->partVec[vertex];
 	  
-	  arr[part] = 1;	  
+	  arr[part] = true;	  
 	}
       for(int b = 0; b < partitionCount; b++){
 	if(arr[b])
@@ -2550,7 +2738,7 @@ int Partitioner::calculateCuts2(int partitionCount)
       if(cut != 0)
 	cuts += cut-1;
       for(int b = 0; b < partitionCount; b++){
-	arr[b] = 0;
+	arr[b] = false;
       }
     }
   
