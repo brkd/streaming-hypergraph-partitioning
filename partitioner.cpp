@@ -551,7 +551,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       //std::cout << "Cuts:" << reg_cuts << std::endl;
       for(int i = 0; i < this->vertexCount; i++)
 	partVec[i] = -1;
-      if(refSize > 0)
+      /*if(refSize > 0)
 	{
 	  std::cout << "@@@ SAME RUN WITH REFINEMENT @@@" << std::endl;
 	  start = std::chrono::high_resolution_clock::now();
@@ -586,7 +586,7 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
 	  //std::cout << "Total cut change: " << reg_cuts - ref3_cuts << std::endl;
 	  for(int i = 0; i < this->vertexCount; i++)
 	    partVec[i] = -1;
-	}
+	    }*/
     }
   else if(algorithm == 3)
     {
@@ -814,6 +814,11 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   double capacityConstraint;
   int currVertexCount = 0;
   
+  for(int i = this->vertexCount - 100; i <= this->vertexCount; i++)
+    {
+      std::cout << this->reverse_sparseMatrixIndex[i] << std::endl;
+    }
+
   for (int i : readOrder) {    
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
@@ -854,7 +859,13 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     //calculateCuts3(partitionCount, i);
     for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
       {
-	int edge = this->reverse_sparseMatrix[k];      
+	int edge = this->reverse_sparseMatrix[k];
+	if(netToPartition[tracker[edge]] == nullptr)
+	  std::cout << "N2P TRACKER EDGE BOŞ" << std::endl;
+	if(edge < 0 || edge >= tracker.size())
+	  std::cout << "EDGE < || >" << " " << edge << " " << tracker.size() << std::endl;
+	if(tracker[edge] < 0 || tracker[edge] >= netToPartition.size())
+	  std::cout << "TRACKER INDEX" << std::endl;
 	if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
 	  netToPartition[tracker[edge]]->push_back(maxIndex);      
       }
@@ -887,14 +898,14 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   int reg_cuts = this->calculateCuts4(partitionCount, netToPartition);
   std::cout << "Cuts:" << reg_cuts << std::endl;
   std::cout << "Final Constraint: " << capacityConstraint << std::endl;
-  /*for(int i = 0; i < netToPartition.size(); i++)
+  for(int i = 0; i < netToPartition.size(); i++)
     {
       delete netToPartition[i];
-      }*/
+    }
 
-  //delete[] sizeArray;
-  //delete[] indexArray;
-  //delete[] markerArray;
+  delete[] sizeArray;
+  delete[] indexArray;
+  delete[] markerArray;
 }
 
 void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double imbal, int ii)
@@ -2403,7 +2414,7 @@ int Partitioner::n2pIndexCorrected(int vertex, int partitionCount, double capaci
 {   
   double maxScore = -1.0;
   int maxIndex = -1;
-  int connectivity;      
+  int connectivity;
   int degree = this->reverse_sparseMatrixIndex[vertex + 1] - this->reverse_sparseMatrixIndex[vertex];
   if(degree <= 0)
     {
@@ -2455,8 +2466,9 @@ int Partitioner::n2pIndexCorrected(int vertex, int partitionCount, double capaci
 	{
 	  for (int part : partArray)
 	    {
+	      int size = sizeArray[part];
 	      connectivity = encounterArray[indexArray[part]];
-	      double partOverCapacity = sizeArray[part] / capacityConstraint;
+	      double partOverCapacity = size / capacityConstraint;
 	      double penalty = 1 - partOverCapacity;
 	      double score = penalty * connectivity;
 	      if (score > maxScore)
@@ -2467,7 +2479,7 @@ int Partitioner::n2pIndexCorrected(int vertex, int partitionCount, double capaci
 	      else if (score == maxScore)
 		{
 		  
-		  if (sizeArray[part] < sizeArray[maxIndex])
+		  if (size < sizeArray[maxIndex])
 		    {
 		      maxIndex = part;
 		    } 	      
@@ -2476,12 +2488,6 @@ int Partitioner::n2pIndexCorrected(int vertex, int partitionCount, double capaci
 	}
     }
   
-  for(int i = 0; i < partitionCount; i++)
-    {
-      indexArray[i] = -1;
-      markerArrayLocal[i] = false;
-    }
-
   return maxIndex;
 }
 
