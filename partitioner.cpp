@@ -547,46 +547,34 @@ void Partitioner::partition(int algorithm, int partitionCount, int slackValue, i
       this->LDGn2p(partitionCount, slackValue, seed, imbal);
       auto end = std::chrono::high_resolution_clock::now();
       std::cout << "Duration:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
-      //int reg_cuts = this->calculateCuts2(partitionCount);
-      //std::cout << "Cuts:" << reg_cuts << std::endl;
       for(int i = 0; i < this->vertexCount; i++)
 	partVec[i] = -1;
-      /*if(refSize > 0)
+      if(refSize > 0)
 	{
-	  std::cout << "@@@ SAME RUN WITH REFINEMENT @@@" << std::endl;
+	  std::cout << "----------------------------" << std::endl;
 	  start = std::chrono::high_resolution_clock::now();
 	  this->LDGn2p_ref(partitionCount, slackValue, seed, imbal, refSize);
 	  end = std::chrono::high_resolution_clock::now();
-	  std::cout << "Duration_R:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
-	  //int ref_cuts = this->calculateCuts2(partitionCount);
-	  //std::cout << "Cuts_R:" << ref_cuts << std::endl;
-	  //std::cout << "Total cut change: " << reg_cuts - ref_cuts << std::endl;
+	  std::cout << "Duration_R1:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
 	  for(int i = 0; i < this->vertexCount; i++)
 	    partVec[i] = -1;
-	  std::cout << "@@@ SAME RUN WITH REFINEMENT 2 @@@" << std::endl;
+
+	  std::cout << "----------------------------" << std::endl;
 	  start = std::chrono::high_resolution_clock::now();
 	  this->LDGn2p_ref2(partitionCount, slackValue, seed, imbal, refSize);
 	  end = std::chrono::high_resolution_clock::now();
 	  std::cout << "Duration_R2:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
-	  //int ref2_cuts = this->calculateCuts2(partitionCount);
-	  //std::cout << "Cuts_R2:" << ref2_cuts << std::endl;
-	  //std::cout << "R2 - R1: " << ref2_cuts - ref_cuts << std::endl;
-	  //std::cout << "Total cut change: " << reg_cuts - ref2_cuts << std::endl;
 	  for(int i = 0; i < this->vertexCount; i++)
 	    partVec[i] = -1;
-	  std::cout << "@@@ SAME RUN WITH REFINEMENT 3 @@@" << std::endl;
+
+	  std::cout << "----------------------------" << std::endl;
 	  start = std::chrono::high_resolution_clock::now();
 	  this->LDGn2p_ref3(partitionCount, slackValue, seed, imbal, refSize);
 	  end = std::chrono::high_resolution_clock::now();
 	  std::cout << "Duration_R3:" << std::chrono::duration_cast<std::chrono::duration<float>>(end - start).count() << std::endl;
-	  //int ref3_cuts = this->calculateCuts2(partitionCount);
-	  //std::cout << "Cuts_R3:" << ref3_cuts << std::endl;
-	  //std::cout << "R3 - R1: " << ref3_cuts - ref_cuts << std::endl;
-	  //std::cout << "R3 - R2: " << ref3_cuts - ref2_cuts << std::endl;
-	  //std::cout << "Total cut change: " << reg_cuts - ref3_cuts << std::endl;
 	  for(int i = 0; i < this->vertexCount; i++)
 	    partVec[i] = -1;
-	    }*/
+	}
     }
   else if(algorithm == 3)
     {
@@ -814,11 +802,6 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   double capacityConstraint;
   int currVertexCount = 0;
   
-  for(int i = this->vertexCount - 100; i <= this->vertexCount; i++)
-    {
-      std::cout << this->reverse_sparseMatrixIndex[i] << std::endl;
-    }
-
   for (int i : readOrder) {    
     if((imbal*currVertexCount) >= slackValue)
       capacityConstraint = (imbal*currVertexCount) / partitionCount;
@@ -860,12 +843,6 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
     for (int k = this->reverse_sparseMatrixIndex[i]; k < this->reverse_sparseMatrixIndex[i + 1]; k++)
       {
 	int edge = this->reverse_sparseMatrix[k];
-	if(netToPartition[tracker[edge]] == nullptr)
-	  std::cout << "N2P TRACKER EDGE BOŞ" << std::endl;
-	if(edge < 0 || edge >= tracker.size())
-	  std::cout << "EDGE < || >" << " " << edge << " " << tracker.size() << std::endl;
-	if(tracker[edge] < 0 || tracker[edge] >= netToPartition.size())
-	  std::cout << "TRACKER INDEX" << std::endl;
 	if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
 	  netToPartition[tracker[edge]]->push_back(maxIndex);      
       }
@@ -888,8 +865,6 @@ void Partitioner::LDGn2p(int partitionCount, int slackValue, int seed, double im
   std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
-  std::cout << "******PART SIZES*******" << std::endl;
-  
 
   //  for(int i = 0; i < partitionCount; i++){
   //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
@@ -1006,7 +981,6 @@ void Partitioner::LDGn2p_i(int partitionCount, int slackValue, int seed, double 
   std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
-  std::cout << "******PART SIZES*******" << std::endl;
   
   //  for(int i = 0; i < partitionCount; i++){
   //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
@@ -1093,7 +1067,6 @@ void Partitioner::LDGBF(int partitionCount, int slackValue, int seed, double imb
   
   std::cout << std::endl;
   
-  std::cout << "******PART SIZES*******" << std::endl;
   
   //  for(int i = 0; i < partitionCount; i++){
   //  std::cout << "part " << i << " size: " << sizeArray[i] << std::endl;
@@ -1644,14 +1617,9 @@ void Partitioner::LDGn2p_ref(int partitionCount, int slackValue, int seed, doubl
   std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
-  std::cout << "******PART SIZES*******" << std::endl;
-  
 
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
   int r1_cuts = this->calculateCuts4(partitionCount, netToPartition);
-  std::cout << "Cuts:" << r1_cuts << std::endl;
+  std::cout << "Cuts_R1:" << r1_cuts << std::endl;
   std::cout << "Final Constraint: " << capacityConstraint << std::endl;
 
 
@@ -1799,14 +1767,9 @@ void Partitioner::LDGn2p_ref2(int partitionCount, int slackValue, int seed, doub
   std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
-  std::cout << "******PART SIZES*******" << std::endl;
-  
-  for(int i = 0; i < partitionCount; i++){
-    std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
-  }
 
   int r2_cuts = this->calculateCuts4(partitionCount, netToPartition);
-  std::cout << "Cuts:" << r2_cuts << std::endl;
+  std::cout << "Cuts_R2:" << r2_cuts << std::endl;
   std::cout << "Final Constraint: " << capacityConstraint << std::endl;
   /*for(int i = 0; i < netToPartition.size(); i++)
 
@@ -1963,13 +1926,13 @@ void Partitioner::LDGn2p_ref3(int partitionCount, int slackValue, int seed, doub
   std::cout << std::endl;
   std::cout << "MAX ALLOWED PART COUNT: " << MAXPARTNO << " - PART COUNT: " << partitionCount <<  std::endl;
   std::cout << "MAX ALLOWED IMBALANCE RATIO: " << MAXIMBAL << " - IMBALANCE RATIO: " << imbal << std::endl;
-  std::cout << "******PART SIZES*******" << std::endl;
   
   //for(int i = 0; i < partitionCount; i++){
   //  std::cout << "part " << i << " size:" << sizeArray[i] << std::endl;
   //}
 
   int r3_cuts = this->calculateCuts4(partitionCount, netToPartition);
+  capacityConstraint = (imbal*currVertexCount) / partitionCount;
   std::cout << "Cuts_R3:" << r3_cuts << std::endl;
   std::cout << "Final Constraint: " << capacityConstraint << std::endl;
   /*for(int i = 0; i < netToPartition.size(); i++)
@@ -2017,7 +1980,8 @@ void Partitioner::n2pRefine2(int partitionCount, int refCount, double capacityCo
   for(int i = 0; i < refCount; i++)
     {
       int vertex = refTracker[i];
-      int maxIndex = this->n2pIndexCorrected(vertex, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
+      int maxIndex = this->n2pIndexCorrected(vertex, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker);
+
       if(maxIndex != this->partVec[vertex] && sizeArray[maxIndex] < capacityConstraint)
 	{
 	  int old_part = this->partVec[vertex];
@@ -2047,12 +2011,12 @@ void Partitioner::n2pRefine2(int partitionCount, int refCount, double capacityCo
 	      if(std::find (netToPartition[tracker[edge]]->begin(), netToPartition[tracker[edge]]->end(), maxIndex) == netToPartition[tracker[edge]]->end())
 		netToPartition[tracker[edge]]->push_back(maxIndex);      
 	    }
-	  for (int i = 0; i < partitionCount; i++) {
-	    indexArray[i] = -1;
-	    markerArray[i] = false;
-	  }
 	}
-      
+
+      for (int i = 0; i < partitionCount; i++) {
+	indexArray[i] = -1;
+	markerArray[i] = false;
+      }      
     }
 }
 
@@ -2062,9 +2026,8 @@ void Partitioner::n2pRefine3(int partitionCount, double imbal, const std::vector
     {
       double capacityConstraint = (imbal*currVertexCount) / partitionCount;
       int vertex = putAsideVector[i]->ID;
-      //std::cout << "ID: " << vertex << std::endl;
       int maxIndex = this->n2pIndexCorrected(vertex, partitionCount, capacityConstraint, sizeArray, indexArray, markerArray, netToPartition, tracker); 
-      //std::cout << "MI: " << maxIndex << std::endl;
+
       this->partVec[vertex] = maxIndex;
       sizeArray[maxIndex] += 1;
       for(int offset = 0; offset < putAsideVector[i]->netCount; offset++)
@@ -2461,7 +2424,6 @@ int Partitioner::n2pIndexCorrected(int vertex, int partitionCount, double capaci
 		maxIndex = i;
 	    }      
 	}
-      
       else
 	{
 	  for (int part : partArray)
