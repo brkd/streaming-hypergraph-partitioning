@@ -11,7 +11,7 @@ ref_size = ["1"]
 csv_header = ["algo", "pc", "imbal", "slack", "rc", "total_reg", "total_r1", "total_r2", "total_r3", "ref_size(MB)", "dur_reg", "dur_r1", "dur_r2", "dur_r3"]
 def write_output(matrix, out, alg, pc, imbal, slack, rc, ref_size):
     name = matrix.split('/')[len(matrix.split('/')) - 1].replace(".*", "")
-    csv_name = "RefResults/" + name + ".csv"
+    csv_name = name + ".csv"
     algo = "N2P"
     with open (csv_name, "a+") as f:
         writer = csv.writer(f)
